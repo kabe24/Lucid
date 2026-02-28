@@ -22,7 +22,11 @@ webpush.setVapidDetails('mailto:kbgnote3@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRI
 // Load subscription: env var → local file → error
 let subscription;
 if (process.env.PUSH_SUBSCRIPTION) {
-  subscription = JSON.parse(process.env.PUSH_SUBSCRIPTION);
+  const raw = process.env.PUSH_SUBSCRIPTION.trim();
+  console.log('Subscription length:', raw.length);
+  console.log('First 3 chars:', JSON.stringify(raw.slice(0, 3)));
+  console.log('Last 3 chars:', JSON.stringify(raw.slice(-3)));
+  subscription = JSON.parse(raw);
 } else if (fs.existsSync('./push-subscription.json')) {
   subscription = JSON.parse(fs.readFileSync('./push-subscription.json', 'utf8'));
 } else {

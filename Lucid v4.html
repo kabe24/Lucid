@@ -3108,6 +3108,7 @@ function App() {
   const [note, setNote] = useState('');
   const [lastEntry, setLastEntry] = useState(null);
   const [showShareConsider, setShowShareConsider] = useState(false);
+  const [show988Sheet, setShow988Sheet] = useState(false);
 
   // Effects
   useEffect(() => {
@@ -3612,10 +3613,67 @@ function App() {
 
           /* ── Crisis ── */
           React.createElement("div", { className: "ct-crisis-row" },
-            React.createElement("a", {
-              href: "tel:988",
-              className: "ct-crisis-link"
+            React.createElement("button", {
+              onClick: () => setShow988Sheet(true),
+              className: "ct-crisis-link",
+              style: { background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }
             }, "🫂 Need more support? Call or text 988")
+          ),
+
+          /* ── 988 Action Sheet ── */
+          show988Sheet && React.createElement("div", {
+            onClick: () => setShow988Sheet(false),
+            style: {
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+              zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+              padding: '0 12px 32px'
+            }
+          },
+            React.createElement("div", {
+              onClick: e => e.stopPropagation(),
+              style: {
+                width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10
+              }
+            },
+              React.createElement("div", {
+                style: {
+                  background: 'rgba(255,255,255,0.97)', borderRadius: 16,
+                  overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+                }
+              },
+                React.createElement("div", {
+                  style: {
+                    padding: '14px 16px 10px', textAlign: 'center',
+                    fontSize: 13, color: T.soft, borderBottom: '1px solid rgba(0,0,0,0.07)'
+                  }
+                }, "988 Suicide & Crisis Lifeline"),
+                React.createElement("a", {
+                  href: "tel:988",
+                  style: {
+                    display: 'block', padding: '16px', textAlign: 'center',
+                    fontSize: 17, fontWeight: 600, color: '#007AFF',
+                    textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.07)'
+                  }
+                }, "📞 Call 988"),
+                React.createElement("a", {
+                  href: "sms:988",
+                  style: {
+                    display: 'block', padding: '16px', textAlign: 'center',
+                    fontSize: 17, fontWeight: 600, color: '#007AFF',
+                    textDecoration: 'none'
+                  }
+                }, "💬 Text 988")
+              ),
+              React.createElement("button", {
+                onClick: () => setShow988Sheet(false),
+                style: {
+                  width: '100%', padding: '16px', borderRadius: 16,
+                  background: 'rgba(255,255,255,0.97)', border: 'none',
+                  fontSize: 17, fontWeight: 600, color: T.primary, cursor: 'pointer',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)'
+                }
+              }, "Cancel")
+            )
           ),
 
           /* ── Disclaimer ── */

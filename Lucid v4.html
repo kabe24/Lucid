@@ -1,0 +1,4175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lucid</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Lucid%22%2C%22short_name%22%3A%22Lucid%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%221B527A%22%2C%22start_url%22%3A%22.%2F%22%7D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lucid">
+<meta name="theme-color" content="#1B527A">
+<link href="https://fonts.googleapis.com/css2?family=Gloock&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<!-- Babel pre-compiled at build time -->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(160deg, #ffffff 0%, #eef6ff 55%, #e2f0fb 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.15); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.08); }
+    56% { transform: scale(1); }
+  }
+  @keyframes ripple {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.06); opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes progressFill {
+    from { width: 0%; }
+  }
+  .ring1 { animation: ripple 2.8s ease-out 0s infinite; }
+  .ring2 { animation: ripple 2.8s ease-out 0.93s infinite; }
+  .ring3 { animation: ripple 2.8s ease-out 1.86s infinite; }
+  .orb { animation: heartbeat 2.2s ease-in-out infinite; }
+  .breathe { animation: breathe 4s ease-in-out infinite; }
+  .float { animation: float 3s ease-in-out infinite; }
+  .fadeUp { animation: fadeUp 0.5s ease forwards; }
+  .progress-bar { animation: progressFill 0.6s ease forwards; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 3px;
+    cursor: default;
+  }
+  .emotion-card {
+    border-radius: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 1.5px solid transparent;
+  }
+  .emotion-card:hover { transform: translateY(-2px); }
+  .tip-box {
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  /* App shell */
+  .app-shell {
+    max-width: 480px;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  /* Centered layout for check-in flow */
+  .checkin-frame {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0 80px;
+  }
+  /* Scrollable layout for nav screens */
+  .nav-screen {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 80px;
+  }
+  /* Bottom nav */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(170,205,224,0.35);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0 env(safe-area-inset-bottom, 10px);
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 12px;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(27,82,122,0.06); }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+  /* Calendar */
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+  .cal-header-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 6px; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px 2px 3px;
+    border-radius: 10px;
+    cursor: default;
+    transition: background 0.12s;
+    position: relative;
+    min-height: 42px;
+  }
+  .cal-day.has-entry { cursor: pointer; }
+  .cal-day.has-entry:hover { background: rgba(27,82,122,0.07); }
+  .cal-day.selected { background: rgba(27,82,122,0.11); }
+  .cal-num { font-size: 12px; font-weight: 500; color: #1B527A; line-height: 1.4; }
+  .cal-num.muted { color: #C0D8E8; }
+  .cal-num.today-num {
+    background: #1B527A; color: white;
+    border-radius: 50%; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dots-row { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 2px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  /* Entry cards */
+  .entry-card {
+    background: rgba(255,255,255,0.85);
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(170,205,224,0.3);
+    box-shadow: 0 2px 8px rgba(27,82,122,0.06);
+    margin-bottom: 10px;
+  }
+  /* Stats bar */
+  .stat-bar-bg {
+    height: 6px;
+    background: rgba(170,205,224,0.25);
+    border-radius: 4px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  /* Settings input */
+  .settings-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(170,205,224,0.5);
+    background: rgba(255,255,255,0.8);
+    font-size: 15px;
+    color: #1B527A;
+    outline: none;
+    font-family: inherit;
+  }
+  .settings-input:focus { border-color: #7AAFC8; }
+  /* Toggle */
+  .toggle-track {
+    width: 42px; height: 24px; border-radius: 12px;
+    cursor: pointer; position: relative; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-thumb {
+    position: absolute; top: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: left 0.2s;
+  }
+
+  /* Search */
+  .search-input {
+    width: 100%;
+    padding: 11px 14px 11px 38px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(170,205,224,0.5);
+    background: rgba(255,255,255,0.9);
+    font-size: 15px;
+    color: #1B527A;
+    outline: none;
+    font-family: inherit;
+  }
+  .search-input:focus { border-color: #7AAFC8; }
+  .search-wrap { position: relative; margin-bottom: 14px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.4; }
+  mark.hl { background: #FEF9EC; color: #B8860B; border-radius: 2px; padding: 0 1px; }
+  /* Onboard */
+  .onboard-dot { height: 6px; border-radius: 3px; transition: width 0.25s ease, background 0.25s ease; }
+  /* Install hint */
+  .install-banner {
+    background: rgba(27,82,122,0.06); border: 1px solid rgba(27,82,122,0.12);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; text-align: left;
+  }
+  /* Notif permission */
+  .notif-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1B527A; color: white; border: none;
+    border-radius: 10px; padding: 9px 16px; font-size: 13px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .notif-btn.deny { background: none; border: 1.5px solid #C0D8E8; color: #4A8BAD; }
+  .time-input {
+    padding: 8px 12px; border-radius: 10px;
+    border: 1.5px solid rgba(170,205,224,0.5);
+    background: rgba(255,255,255,0.8);
+    font-size: 15px; color: #1B527A;
+    outline: none; font-family: inherit;
+  }
+  .time-input:focus { border-color: #7AAFC8; }
+
+  /* ── Shared Moments ── */
+  .share-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(10,22,42,0.52);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .share-card-wrap {
+    max-width: 340px; width: 100%;
+    animation: slideUp 0.22s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .share-card {
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(27,82,122,0.28);
+    background: white;
+  }
+  .share-card-top-bar {
+    height: 8px;
+  }
+  .share-card-body {
+    padding: 20px 22px 22px;
+  }
+  .share-chain {
+    display: flex; align-items: center; gap: 5px;
+    flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .share-chain-arrow {
+    color: #A8CCE0; font-size: 11px;
+  }
+  .share-actions {
+    display: flex; gap: 8px; margin-top: 18px;
+  }
+  .share-btn-primary {
+    flex: 1; padding: 10px 0; border: none; border-radius: 12px;
+    background: #1B527A; color: white;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .share-btn-primary:hover { opacity: 0.88; }
+  .share-btn-secondary {
+    flex: 1; padding: 10px 0; border: 1.5px solid rgba(170,205,224,0.6);
+    border-radius: 12px; background: none; color: #4A8BAD;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+  }
+  .share-btn-secondary:hover { background: rgba(170,205,224,0.12); }
+  .share-close-row {
+    margin-top: 10px; text-align: center;
+  }
+  .share-close-btn {
+    background: none; border: none; color: rgba(255,255,255,0.65);
+    font-size: 13px; cursor: pointer; font-family: inherit; padding: 4px 12px;
+  }
+  .share-close-btn:hover { color: white; }
+  .copy-toast {
+    position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%);
+    background: #1B527A; color: white;
+    padding: 9px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 16px rgba(27,82,122,0.3);
+    z-index: 400; pointer-events: none;
+    animation: toastIn 0.2s ease, toastOut 0.3s ease 1.6s forwards;
+  }
+  @keyframes toastIn  { from { opacity:0; transform: translateX(-50%) translateY(8px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+  @keyframes toastOut { to { opacity:0; transform: translateX(-50%) translateY(8px); } }
+
+  /* ── Consider This ── */
+  .ct-anchor {
+    font-family: 'Gloock', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #1B527A;
+    line-height: 1.35;
+    text-align: center;
+    margin: 4px 0 6px;
+  }
+  .ct-nudge-card {
+    background: rgba(255,255,255,0.88);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid rgba(170,205,224,0.35);
+    box-shadow: 0 2px 8px rgba(27,82,122,0.06);
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .ct-nudge-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ct-nudge-text {
+    font-size: 14px;
+    color: #2E5F7A;
+    line-height: 1.6;
+  }
+  .ct-share-row {
+    background: rgba(255,255,255,0.82);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid rgba(170,205,224,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .ct-share-who {
+    font-size: 14px;
+    color: #1B527A;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .ct-share-sub {
+    font-size: 12px;
+    color: #7AAFC8;
+    margin-top: 2px;
+  }
+  .ct-share-btn {
+    background: #1B527A;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .ct-share-btn:hover { opacity: 0.87; }
+  .ct-crisis-row {
+    text-align: center;
+    margin: 8px 0 6px;
+  }
+  .ct-crisis-link {
+    font-size: 12px;
+    color: #7AAFC8;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ct-crisis-link:hover { color: #4A8BAD; }
+  .ct-disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: #A8CCE0;
+    margin-top: 4px;
+    margin-bottom: 24px;
+  }
+  .ct-saved-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(27,82,122,0.07);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4A8BAD;
+    margin-bottom: 16px;
+  }
+  .ct-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #A8CCE0;
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+  /* Share row button inside entry card */
+  .entry-share-btn {
+    font-size: 12px; color: #4A8BAD; cursor: pointer;
+    display: flex; align-items: center; gap: 3px;
+    padding: 2px 6px; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .entry-share-btn:hover { background: rgba(74,139,173,0.1); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+
+/* ─── Screen enum ─── */
+const SCREEN = {
+  WELCOME: 'WELCOME',
+  CORE: 'CORE',
+  SECONDARY: 'SECONDARY',
+  TERTIARY: 'TERTIARY',
+  CONNECTION: 'CONNECTION',
+  NOTE: 'NOTE',
+  DONE: 'DONE',
+  CONSIDER_THIS: 'CONSIDER_THIS'
+};
+const VIEW = {
+  CHECKIN: 'CHECKIN',
+  HISTORY: 'HISTORY',
+  STATS: 'STATS',
+  SETTINGS: 'SETTINGS',
+  ONBOARD: 'ONBOARD'
+};
+
+/* ─── Design tokens ─── */
+const T = {
+  bg: 'linear-gradient(160deg, #ffffff 0%, #eef6ff 55%, #e2f0fb 100%)',
+  primary: '#1B527A',
+  mid: '#4A8BAD',
+  soft: '#7AAFC8',
+  ghost: '#A8CCE0',
+  card: 'rgba(255,255,255,0.82)',
+  border: 'rgba(170,205,224,0.35)',
+  cta: '#1B527A',
+  ctaShadow: 'rgba(27,82,122,0.18)',
+  shadow: '0 2px 12px rgba(27,82,122,0.07)',
+  shadowMd: '0 4px 20px rgba(27,82,122,0.12)'
+};
+
+/* ─── Feelings Wheel data ─── */
+const emotions = [{
+  id: 'happy',
+  label: 'Happy',
+  icon: '🌸',
+  hint: 'joyful · grateful · excited',
+  color: '#F9C74F',
+  darkColor: '#B8860B',
+  pastel: '#FEF9EC',
+  secondary: [{
+    id: 'joyful',
+    label: 'Joyful',
+    definition: 'A bright, bubbly feeling of delight',
+    synonyms: ['elated', 'gleeful', 'exuberant'],
+    bodyFeel: 'Lightness in chest',
+    tertiary: [{
+      id: 'elated',
+      label: 'Elated',
+      definition: 'On top of the world — a soaring high',
+      synonyms: ['ecstatic', 'thrilled', 'jubilant'],
+      bodyFeel: 'Tingling, lifted energy'
+    }, {
+      id: 'gleeful',
+      label: 'Gleeful',
+      definition: 'Bright, playful happiness that wants to burst out',
+      synonyms: ['merry', 'jovial', 'bubbly'],
+      bodyFeel: 'Bubbly in the belly'
+    }, {
+      id: 'exuberant',
+      label: 'Exuberant',
+      definition: 'Overflowing with lively energy',
+      synonyms: ['vivacious', 'effervescent', 'zestful'],
+      bodyFeel: 'Whole body buzzing'
+    }]
+  }, {
+    id: 'grateful',
+    label: 'Grateful',
+    definition: 'Warm appreciation for something or someone',
+    synonyms: ['thankful', 'appreciative', 'blessed'],
+    bodyFeel: 'Warmth in heart',
+    tertiary: [{
+      id: 'thankful',
+      label: 'Thankful',
+      definition: 'Glad for what has been given or done',
+      synonyms: ['appreciative', 'obliged', 'moved'],
+      bodyFeel: 'Softness in chest'
+    }, {
+      id: 'appreciative',
+      label: 'Appreciative',
+      definition: 'Recognizing and valuing what matters',
+      synonyms: ['grateful', 'aware', 'mindful'],
+      bodyFeel: 'Open, warm heart'
+    }, {
+      id: 'blessed',
+      label: 'Blessed',
+      definition: 'A deep sense of fortunate grace',
+      synonyms: ['favored', 'cherished', 'fortunate'],
+      bodyFeel: 'Fullness in chest'
+    }]
+  }, {
+    id: 'excited',
+    label: 'Excited',
+    definition: 'Energized anticipation about something ahead',
+    synonyms: ['eager', 'animated', 'pumped'],
+    bodyFeel: 'Fluttery stomach',
+    tertiary: [{
+      id: 'eager',
+      label: 'Eager',
+      definition: 'Leaning forward with keenness',
+      synonyms: ['keen', 'enthusiastic', 'ready'],
+      bodyFeel: 'Pulled forward feeling'
+    }, {
+      id: 'animated',
+      label: 'Animated',
+      definition: 'Full of lively, expressive energy',
+      synonyms: ['spirited', 'vibrant', 'alive'],
+      bodyFeel: 'Energy in arms, hands'
+    }, {
+      id: 'hopeful',
+      label: 'Hopeful',
+      definition: 'Expecting that good things will come',
+      synonyms: ['optimistic', 'encouraged', 'expectant'],
+      bodyFeel: 'Light, open chest'
+    }]
+  }, {
+    id: 'content',
+    label: 'Content',
+    definition: 'Quiet, settled satisfaction with things as they are',
+    synonyms: ['satisfied', 'at ease', 'peaceful'],
+    bodyFeel: 'Settled, soft belly',
+    tertiary: [{
+      id: 'satisfied',
+      label: 'Satisfied',
+      definition: 'Needs are met — nothing lacking',
+      synonyms: ['fulfilled', 'pleased', 'gratified'],
+      bodyFeel: 'Full, grounded belly'
+    }, {
+      id: 'peaceful',
+      label: 'Peaceful',
+      definition: 'Calm and free from disturbance',
+      synonyms: ['serene', 'tranquil', 'still'],
+      bodyFeel: 'Slow, deep breathing'
+    }, {
+      id: 'proud',
+      label: 'Proud',
+      definition: 'Pleased with an achievement or quality',
+      synonyms: ['accomplished', 'confident', 'fulfilled'],
+      bodyFeel: 'Upright posture, open chest'
+    }]
+  }]
+}, {
+  id: 'sad',
+  label: 'Sad',
+  icon: '🥀',
+  hint: 'down · grieving · lonely',
+  color: '#74B3CE',
+  darkColor: '#2E6F8E',
+  pastel: '#EAF4FA',
+  secondary: [{
+    id: 'lonely',
+    label: 'Lonely',
+    definition: 'Feeling cut off or disconnected from others',
+    synonyms: ['isolated', 'alone', 'longing'],
+    bodyFeel: 'Ache in chest',
+    tertiary: [{
+      id: 'isolated',
+      label: 'Isolated',
+      definition: 'Set apart — like no one can reach you',
+      synonyms: ['withdrawn', 'disconnected', 'apart'],
+      bodyFeel: 'Hollow in chest'
+    }, {
+      id: 'longing',
+      label: 'Longing',
+      definition: 'A yearning ache for what is absent',
+      synonyms: ['pining', 'missing', 'wistful'],
+      bodyFeel: 'Pulling in chest'
+    }, {
+      id: 'homesick',
+      label: 'Homesick',
+      definition: 'Missing a place or time of comfort',
+      synonyms: ['nostalgic', 'yearning', 'displaced'],
+      bodyFeel: 'Heavy heart'
+    }]
+  }, {
+    id: 'grief',
+    label: 'Grief',
+    definition: 'Deep sorrow from loss',
+    synonyms: ['heartbroken', 'bereaved', 'mourning'],
+    bodyFeel: 'Heavy, tight chest',
+    tertiary: [{
+      id: 'heartbroken',
+      label: 'Heartbroken',
+      definition: 'Shattered by loss or disappointment',
+      synonyms: ['devastated', 'crushed', 'bereft'],
+      bodyFeel: 'Physical pain in chest'
+    }, {
+      id: 'mourning',
+      label: 'Mourning',
+      definition: 'Processing the weight of what is gone',
+      synonyms: ['grieving', 'lamenting', 'sorrowful'],
+      bodyFeel: 'Weighted, slow body'
+    }, {
+      id: 'mournful',
+      label: 'Mournful',
+      definition: 'A quiet, aching sadness',
+      synonyms: ['melancholy', 'somber', 'plaintive'],
+      bodyFeel: 'Heaviness in limbs'
+    }]
+  }, {
+    id: 'disappointed',
+    label: 'Disappointed',
+    definition: 'Expectations unmet, leaving a let-down feeling',
+    synonyms: ['let down', 'deflated', 'discouraged'],
+    bodyFeel: 'Sinking in stomach',
+    tertiary: [{
+      id: 'let-down',
+      label: 'Let Down',
+      definition: 'Someone or something failed to show up as hoped',
+      synonyms: ['betrayed', 'let down', 'failed'],
+      bodyFeel: 'Drop in belly'
+    }, {
+      id: 'deflated',
+      label: 'Deflated',
+      definition: 'Energy drained out — like a punctured balloon',
+      synonyms: ['dispirited', 'crushed', 'flat'],
+      bodyFeel: 'Collapsed chest'
+    }, {
+      id: 'discouraged',
+      label: 'Discouraged',
+      definition: 'Hope dimmed by setbacks',
+      synonyms: ['disheartened', 'downcast', 'demoralized'],
+      bodyFeel: 'Slumped shoulders'
+    }]
+  }, {
+    id: 'hopeless',
+    label: 'Hopeless',
+    definition: 'Unable to see a way forward or things improving',
+    synonyms: ['despairing', 'defeated', 'lost'],
+    bodyFeel: 'Emptiness in chest',
+    tertiary: [{
+      id: 'despairing',
+      label: 'Despairing',
+      definition: 'All hope gone — feeling powerless',
+      synonyms: ['desperate', 'desolate', 'anguished'],
+      bodyFeel: 'Crushing weight on chest'
+    }, {
+      id: 'defeated',
+      label: 'Defeated',
+      definition: 'Worn down by repeated loss or failure',
+      synonyms: ['broken', 'beaten', 'resigned'],
+      bodyFeel: 'Heavy, sunken body'
+    }, {
+      id: 'miserable',
+      label: 'Miserable',
+      definition: 'Deep, pervasive wretchedness',
+      synonyms: ['wretched', 'unhappy', 'anguished'],
+      bodyFeel: 'Pain throughout body'
+    }]
+  }]
+}, {
+  id: 'angry',
+  label: 'Angry',
+  icon: '🌪️',
+  hint: 'frustrated · hurt · betrayed',
+  color: '#F07167',
+  darkColor: '#C0392B',
+  pastel: '#FEEFEE',
+  secondary: [{
+    id: 'frustrated',
+    label: 'Frustrated',
+    definition: 'Blocked from what you need or want',
+    synonyms: ['annoyed', 'thwarted', 'irritated'],
+    bodyFeel: 'Tension in jaw/shoulders',
+    tertiary: [{
+      id: 'annoyed',
+      label: 'Annoyed',
+      definition: 'Mildly bothered by repeated interference',
+      synonyms: ['irritated', 'peeved', 'bothered'],
+      bodyFeel: 'Tightening in brow'
+    }, {
+      id: 'exasperated',
+      label: 'Exasperated',
+      definition: 'Pushed to the limit — patience worn out',
+      synonyms: ['fed up', 'exhausted', 'strained'],
+      bodyFeel: 'Clenched jaw, tight chest'
+    }, {
+      id: 'impatient',
+      label: 'Impatient',
+      definition: 'Urgently wanting things to move faster',
+      synonyms: ['restless', 'antsy', 'edgy'],
+      bodyFeel: 'Restlessness in legs'
+    }]
+  }, {
+    id: 'hurt',
+    label: 'Hurt',
+    definition: 'Wounded by actions or words of others',
+    synonyms: ['wounded', 'stung', 'betrayed'],
+    bodyFeel: 'Ache in chest or gut',
+    tertiary: [{
+      id: 'betrayed',
+      label: 'Betrayed',
+      definition: 'Trust broken by someone counted on',
+      synonyms: ['deceived', 'let down', 'stabbed'],
+      bodyFeel: 'Burning in chest'
+    }, {
+      id: 'wounded',
+      label: 'Wounded',
+      definition: 'An emotional injury that stings',
+      synonyms: ['hurt', 'stung', 'scarred'],
+      bodyFeel: 'Sharp pain in chest'
+    }, {
+      id: 'humiliated',
+      label: 'Humiliated',
+      definition: 'Dignity stripped away publicly',
+      synonyms: ['ashamed', 'degraded', 'embarrassed'],
+      bodyFeel: 'Heat in face, sunken chest'
+    }]
+  }, {
+    id: 'resentful',
+    label: 'Resentful',
+    definition: 'Simmering bitterness from past wounds',
+    synonyms: ['bitter', 'indignant', 'grudging'],
+    bodyFeel: 'Heat in chest',
+    tertiary: [{
+      id: 'bitter',
+      label: 'Bitter',
+      definition: 'Anger that has curdled over time',
+      synonyms: ['acrimonious', 'resentful', 'sour'],
+      bodyFeel: 'Tight, constricted chest'
+    }, {
+      id: 'indignant',
+      label: 'Indignant',
+      definition: 'Angry at perceived unfairness',
+      synonyms: ['offended', 'righteous', 'incensed'],
+      bodyFeel: 'Upright posture, tense muscles'
+    }, {
+      id: 'volatile',
+      label: 'Volatile',
+      definition: 'On edge — ready to erupt',
+      synonyms: ['explosive', 'unstable', 'reactive'],
+      bodyFeel: 'Heat surging through body'
+    }]
+  }, {
+    id: 'jealous',
+    label: 'Jealous',
+    definition: 'Fear of losing something or someone to another',
+    synonyms: ['envious', 'possessive', 'threatened'],
+    bodyFeel: 'Knot in stomach',
+    tertiary: [{
+      id: 'envious',
+      label: 'Envious',
+      definition: 'Wanting what someone else has',
+      synonyms: ['covetous', 'jealous', 'longing'],
+      bodyFeel: 'Tightness in gut'
+    }, {
+      id: 'possessive',
+      label: 'Possessive',
+      definition: 'Gripping tightly out of fear of loss',
+      synonyms: ['controlling', 'clingy', 'guarded'],
+      bodyFeel: 'Tension in hands, chest'
+    }, {
+      id: 'threatened',
+      label: 'Threatened',
+      definition: 'Sensing danger to something valued',
+      synonyms: ['insecure', 'at risk', 'vulnerable'],
+      bodyFeel: 'Tightening in chest/throat'
+    }]
+  }]
+}, {
+  id: 'fearful',
+  label: 'Fearful',
+  icon: '🌊',
+  hint: 'anxious · insecure · overwhelmed',
+  color: '#9B89C4',
+  darkColor: '#6A4FA0',
+  pastel: '#F3F0FA',
+  secondary: [{
+    id: 'anxious',
+    label: 'Anxious',
+    definition: 'Uneasy worry about what might happen',
+    synonyms: ['nervous', 'worried', 'tense'],
+    bodyFeel: 'Fluttery chest/stomach',
+    tertiary: [{
+      id: 'nervous',
+      label: 'Nervous',
+      definition: 'On edge, anticipating something uncertain',
+      synonyms: ['jittery', 'edgy', 'uneasy'],
+      bodyFeel: 'Butterflies in stomach'
+    }, {
+      id: 'worried',
+      label: 'Worried',
+      definition: 'Mind churning over possible bad outcomes',
+      synonyms: ['concerned', 'fretful', 'troubled'],
+      bodyFeel: 'Tightness in chest'
+    }, {
+      id: 'dread',
+      label: 'Dread',
+      definition: 'Heavy anticipatory fear of something coming',
+      synonyms: ['apprehensive', 'foreboding', 'dreading'],
+      bodyFeel: 'Sinking in stomach'
+    }]
+  }, {
+    id: 'insecure',
+    label: 'Insecure',
+    definition: 'Doubting yourself or your place in the world',
+    synonyms: ['uncertain', 'unworthy', 'doubtful'],
+    bodyFeel: 'Shallow breathing',
+    tertiary: [{
+      id: 'inadequate',
+      label: 'Inadequate',
+      definition: 'Feeling like you don\'t measure up',
+      synonyms: ['insufficient', 'not enough', 'incapable'],
+      bodyFeel: 'Sunken chest, slumped posture'
+    }, {
+      id: 'inferior',
+      label: 'Inferior',
+      definition: 'Ranking yourself below others',
+      synonyms: ['lesser', 'subordinate', 'unworthy'],
+      bodyFeel: 'Shrinking in body'
+    }, {
+      id: 'self-conscious',
+      label: 'Self-Conscious',
+      definition: 'Hyper-aware of being observed and judged',
+      synonyms: ['awkward', 'exposed', 'embarrassed'],
+      bodyFeel: 'Heat in face, tense body'
+    }]
+  }, {
+    id: 'overwhelmed',
+    label: 'Overwhelmed',
+    definition: 'Too much coming in at once — capacity exceeded',
+    synonyms: ['flooded', 'swamped', 'paralyzed'],
+    bodyFeel: 'Pressure in head/chest',
+    tertiary: [{
+      id: 'paralyzed',
+      label: 'Paralyzed',
+      definition: 'Frozen — unable to move or decide',
+      synonyms: ['stuck', 'immobilized', 'locked'],
+      bodyFeel: 'Frozen in body'
+    }, {
+      id: 'stressed',
+      label: 'Stressed',
+      definition: 'Stretched beyond comfortable limits',
+      synonyms: ['strained', 'pressured', 'taxed'],
+      bodyFeel: 'Shoulders up to ears'
+    }, {
+      id: 'frazzled',
+      label: 'Frazzled',
+      definition: 'Worn to the edges — nerves frayed',
+      synonyms: ['fried', 'ragged', 'burned out'],
+      bodyFeel: 'Exhaustion, tight neck'
+    }]
+  }, {
+    id: 'helpless',
+    label: 'Helpless',
+    definition: 'Lacking the power or ability to change things',
+    synonyms: ['powerless', 'trapped', 'stuck'],
+    bodyFeel: 'Weakness in limbs',
+    tertiary: [{
+      id: 'powerless',
+      label: 'Powerless',
+      definition: 'No agency — things happening to you',
+      synonyms: ['helpless', 'controlled', 'weak'],
+      bodyFeel: 'Limp, heavy body'
+    }, {
+      id: 'vulnerable',
+      label: 'Vulnerable',
+      definition: 'Open and unprotected — exposed to hurt',
+      synonyms: ['exposed', 'fragile', 'unguarded'],
+      bodyFeel: 'Open, undefended chest'
+    }, {
+      id: 'fragile',
+      label: 'Fragile',
+      definition: 'Feeling breakable — close to the edge',
+      synonyms: ['delicate', 'brittle', 'tender'],
+      bodyFeel: 'Trembling, tense'
+    }]
+  }]
+}, {
+  id: 'disgusted',
+  label: 'Disgusted',
+  icon: '🌋',
+  hint: 'repulsed · disapproving · uncomfortable',
+  color: '#80B07A',
+  darkColor: '#3D7A35',
+  pastel: '#EEF7ED',
+  secondary: [{
+    id: 'repulsed',
+    label: 'Repulsed',
+    definition: 'A strong physical or emotional recoil',
+    synonyms: ['revolted', 'sickened', 'nauseated'],
+    bodyFeel: 'Nausea in stomach',
+    tertiary: [{
+      id: 'revolted',
+      label: 'Revolted',
+      definition: 'Turned completely away in disgust',
+      synonyms: ['sickened', 'repulsed', 'nauseated'],
+      bodyFeel: 'Churning stomach'
+    }, {
+      id: 'nauseated',
+      label: 'Nauseated',
+      definition: 'Queasy reaction to something offensive',
+      synonyms: ['sick', 'queasy', 'unsettled'],
+      bodyFeel: 'Rising nausea'
+    }, {
+      id: 'horrified',
+      label: 'Horrified',
+      definition: 'Shocked and deeply disturbed',
+      synonyms: ['appalled', 'aghast', 'shocked'],
+      bodyFeel: 'Frozen, cold flush'
+    }]
+  }, {
+    id: 'disapproving',
+    label: 'Disapproving',
+    definition: 'Judging something as wrong or unacceptable',
+    synonyms: ['judgmental', 'critical', 'disdainful'],
+    bodyFeel: 'Furrowed brow, pursed lips',
+    tertiary: [{
+      id: 'judgmental',
+      label: 'Judgmental',
+      definition: 'Forming harsh views about what is seen',
+      synonyms: ['critical', 'condemning', 'harsh'],
+      bodyFeel: 'Tightening of jaw'
+    }, {
+      id: 'disdainful',
+      label: 'Disdainful',
+      definition: 'Looking down — seeing as beneath you',
+      synonyms: ['contemptuous', 'condescending', 'dismissive'],
+      bodyFeel: 'Lifted chin, tension'
+    }, {
+      id: 'appalled',
+      label: 'Appalled',
+      definition: 'Shocked by something morally offensive',
+      synonyms: ['horrified', 'outraged', 'disgusted'],
+      bodyFeel: 'Chest recoil'
+    }]
+  }, {
+    id: 'uncomfortable',
+    label: 'Uncomfortable',
+    definition: 'Uneasy, squirming unease',
+    synonyms: ['uneasy', 'awkward', 'troubled'],
+    bodyFeel: 'Squirming in body',
+    tertiary: [{
+      id: 'uneasy',
+      label: 'Uneasy',
+      definition: 'Vague discomfort with no clear cause',
+      synonyms: ['unsettled', 'queasy', 'bothered'],
+      bodyFeel: 'Unease in belly'
+    }, {
+      id: 'awkward',
+      label: 'Awkward',
+      definition: 'Out of sync — not sure how to be',
+      synonyms: ['clumsy', 'ill-at-ease', 'self-conscious'],
+      bodyFeel: 'Stiff, rigid body'
+    }, {
+      id: 'aversion',
+      label: 'Aversion',
+      definition: 'Strong pull away from something',
+      synonyms: ['repelled', 'resistant', 'opposed'],
+      bodyFeel: 'Body pulling back'
+    }]
+  }, {
+    id: 'shame',
+    label: 'Shame',
+    definition: 'A painful sense of being flawed or unworthy at your core',
+    synonyms: ['mortified', 'humiliated', 'remorseful'],
+    bodyFeel: 'Collapsing in chest',
+    tertiary: [{
+      id: 'mortified',
+      label: 'Mortified',
+      definition: 'Deeply embarrassed — wanting to disappear',
+      synonyms: ['humiliated', 'red-faced', 'shamed'],
+      bodyFeel: 'Heat in face, sinking body'
+    }, {
+      id: 'remorseful',
+      label: 'Remorseful',
+      definition: 'Regret for something done or left undone',
+      synonyms: ['regretful', 'guilty', 'contrite'],
+      bodyFeel: 'Heavy, tight stomach'
+    }, {
+      id: 'guilty',
+      label: 'Guilty',
+      definition: 'Knowing you have done something wrong',
+      synonyms: ['at fault', 'blameworthy', 'remorseful'],
+      bodyFeel: 'Knot in gut'
+    }]
+  }]
+}, {
+  id: 'surprised',
+  label: 'Surprised',
+  icon: '⛈️',
+  hint: 'shocked · confused · amazed',
+  color: '#F4A261',
+  darkColor: '#C06A2A',
+  pastel: '#FEF5EC',
+  secondary: [{
+    id: 'shocked',
+    label: 'Shocked',
+    definition: 'Jolted by something unexpected',
+    synonyms: ['startled', 'stunned', 'taken aback'],
+    bodyFeel: 'Jolt in chest',
+    tertiary: [{
+      id: 'startled',
+      label: 'Startled',
+      definition: 'A sudden fright from the unexpected',
+      synonyms: ['jolted', 'alarmed', 'surprised'],
+      bodyFeel: 'Surge through body'
+    }, {
+      id: 'stunned',
+      label: 'Stunned',
+      definition: 'Momentarily unable to process — frozen',
+      synonyms: ['dazed', 'speechless', 'floored'],
+      bodyFeel: 'Body gone still'
+    }, {
+      id: 'dismayed',
+      label: 'Dismayed',
+      definition: 'Troubled and unsettled by a turn of events',
+      synonyms: ['alarmed', 'disheartened', 'troubled'],
+      bodyFeel: 'Drop in stomach'
+    }]
+  }, {
+    id: 'confused',
+    label: 'Confused',
+    definition: 'Unable to make sense of what is happening',
+    synonyms: ['perplexed', 'disoriented', 'bewildered'],
+    bodyFeel: 'Fuzzy, pressured head',
+    tertiary: [{
+      id: 'perplexed',
+      label: 'Perplexed',
+      definition: 'Puzzled — things don\'t add up',
+      synonyms: ['baffled', 'stumped', 'confused'],
+      bodyFeel: 'Tightening brow'
+    }, {
+      id: 'bewildered',
+      label: 'Bewildered',
+      definition: 'Utterly at a loss — lost in a fog',
+      synonyms: ['dazed', 'disoriented', 'mystified'],
+      bodyFeel: 'Disorientation in head'
+    }, {
+      id: 'conflicted',
+      label: 'Conflicted',
+      definition: 'Pulled in opposite directions at once',
+      synonyms: ['torn', 'ambivalent', 'undecided'],
+      bodyFeel: 'Tension across chest'
+    }]
+  }, {
+    id: 'amazed',
+    label: 'Amazed',
+    definition: 'Filled with wonder at something extraordinary',
+    synonyms: ['astonished', 'awestruck', 'astounded'],
+    bodyFeel: 'Expansion in chest',
+    tertiary: [{
+      id: 'astonished',
+      label: 'Astonished',
+      definition: 'Completely caught off guard in a good way',
+      synonyms: ['amazed', 'floored', 'awed'],
+      bodyFeel: 'Wide eyes, open body'
+    }, {
+      id: 'awestruck',
+      label: 'Awestruck',
+      definition: 'Struck silent by something vast and beautiful',
+      synonyms: ['awed', 'reverent', 'moved'],
+      bodyFeel: 'Stillness, open chest'
+    }, {
+      id: 'moved',
+      label: 'Moved',
+      definition: 'Touched at a deep emotional level',
+      synonyms: ['touched', 'stirred', 'affected'],
+      bodyFeel: 'Warmth, tears possible'
+    }]
+  }, {
+    id: 'eager',
+    label: 'Eagerly Curious',
+    definition: 'Energized by what is new or unknown',
+    synonyms: ['curious', 'intrigued', 'captivated'],
+    bodyFeel: 'Leaning forward',
+    tertiary: [{
+      id: 'curious',
+      label: 'Curious',
+      definition: 'Pulled toward exploring what is unknown',
+      synonyms: ['inquisitive', 'interested', 'intrigued'],
+      bodyFeel: 'Forward lean, bright energy'
+    }, {
+      id: 'intrigued',
+      label: 'Intrigued',
+      definition: 'Fascinated — wanting to know more',
+      synonyms: ['engaged', 'captivated', 'hooked'],
+      bodyFeel: 'Alert, attentive body'
+    }, {
+      id: 'energized',
+      label: 'Energized',
+      definition: 'Sparked alive by novelty',
+      synonyms: ['activated', 'invigorated', 'alive'],
+      bodyFeel: 'Charged energy in body'
+    }]
+  }]
+}];
+const connections = [{
+  id: 'solo',
+  label: 'Just me — staying in',
+  icon: '🏡'
+}, {
+  id: 'partner',
+  label: 'With my partner',
+  icon: '💑'
+}, {
+  id: 'family',
+  label: 'With family',
+  icon: '👨‍👩‍👧'
+}, {
+  id: 'friends',
+  label: 'With friends',
+  icon: '👯'
+}, {
+  id: 'work',
+  label: 'Work / school',
+  icon: '💼'
+}, {
+  id: 'community',
+  label: 'Out in the world',
+  icon: '🌍'
+}];
+
+/* ─── Storage ─── */
+const STORAGE_KEY = 'lucid_entries';
+const PREFS_KEY = 'lucid_prefs';
+function loadEntries() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+function saveEntryToStore(entry) {
+  const all = loadEntries();
+  all.push(entry);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  return all;
+}
+function deleteEntryFromStore(id) {
+  const all = loadEntries().filter(e => e.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  return all;
+}
+function loadPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+function savePrefs(prefs) {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+}
+
+/* ─── PWA / device helpers ─── */
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
+}
+
+/* ─── Notification helpers ─── */
+function requestNotifPermission() {
+  if (!('Notification' in window)) return Promise.resolve('unsupported');
+  if (Notification.permission !== 'default') return Promise.resolve(Notification.permission);
+  return Promise.resolve(Notification.requestPermission());
+}
+function fireNotif() {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('Lucid · Check In 💙', {
+      body: 'Take a moment — how are you feeling right now?',
+      tag: 'lucid-reminder'
+    });
+  }
+}
+function scheduleReminder(reminderTime, timerRef) {
+  if (timerRef.current) clearTimeout(timerRef.current);
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const [h, m] = (reminderTime || '20:00').split(':').map(Number);
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  const ms = target - now;
+  timerRef.current = setTimeout(() => {
+    fireNotif();
+    scheduleReminder(reminderTime, timerRef);
+  }, ms);
+}
+
+/* ─── Search helpers ─── */
+function matchesQuery(entry, q) {
+  if (!q) return true;
+  const lq = q.toLowerCase();
+  return (entry.tertiary?.label || '').toLowerCase().includes(lq) || (entry.secondary?.label || '').toLowerCase().includes(lq) || (entry.core?.label || '').toLowerCase().includes(lq) || (entry.note || '').toLowerCase().includes(lq);
+}
+function Highlight({
+  text,
+  query
+}) {
+  if (!query || !text) return /*#__PURE__*/React.createElement("span", null, text);
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return /*#__PURE__*/React.createElement("span", null, text);
+  return /*#__PURE__*/React.createElement("span", null, text.slice(0, idx), /*#__PURE__*/React.createElement("mark", {
+    className: "hl"
+  }, text.slice(idx, idx + query.length)), text.slice(idx + query.length));
+}
+
+/* ─── Date helpers ─── */
+function getDateStr(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+function formatDate(ts) {
+  return new Date(ts).toLocaleDateString([], {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+function todayStr() {
+  return getDateStr(Date.now());
+}
+function groupByDate(entries) {
+  const map = {};
+  entries.forEach(e => {
+    const d = getDateStr(e.timestamp);
+    if (!map[d]) map[d] = [];
+    map[d].push(e);
+  });
+  return map;
+}
+function calcStreak(entries) {
+  if (!entries.length) return 0;
+  const dates = [...new Set(entries.map(e => getDateStr(e.timestamp)))].sort().reverse();
+  const today = todayStr();
+  const yest = new Date();
+  yest.setDate(yest.getDate() - 1);
+  const yesterday = getDateStr(yest.getTime());
+  if (dates[0] !== today && dates[0] !== yesterday) return 0;
+  let streak = 1,
+    prev = dates[0];
+  for (let i = 1; i < dates.length; i++) {
+    const [y, m, day] = prev.split('-').map(Number);
+    const d = new Date(y, m - 1, day - 1);
+    const expected = getDateStr(d.getTime());
+    if (dates[i] === expected) {
+      streak++;
+      prev = dates[i];
+    } else break;
+  }
+  return streak;
+}
+function getMostCommon(entries) {
+  const counts = {};
+  entries.forEach(e => {
+    if (e.tertiary) {
+      const k = e.tertiary.label;
+      counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return sorted[0] || null;
+}
+function getWeekCount(entries) {
+  const cutoff = Date.now() - 7 * 86400000;
+  return entries.filter(e => new Date(e.timestamp).getTime() > cutoff).length;
+}
+function getCalDays(year, month) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+  const prevYear = month === 0 ? year - 1 : year;
+  const prevMonth = month === 0 ? 11 : month - 1;
+  const nextYear = month === 11 ? year + 1 : year;
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const days = [];
+  for (let i = firstDay - 1; i >= 0; i--) days.push({
+    date: daysInPrev - i,
+    padding: true,
+    year: prevYear,
+    month: prevMonth
+  });
+  for (let d = 1; d <= daysInMonth; d++) days.push({
+    date: d,
+    padding: false,
+    year,
+    month
+  });
+  let next = 1;
+  while (days.length % 7 !== 0) days.push({
+    date: next++,
+    padding: true,
+    year: nextYear,
+    month: nextMonth
+  });
+  return days;
+}
+function dayKey(year, month, date) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+}
+
+/* ─── Reusable components ─── */
+function ProgressBar({
+  step,
+  total = 5
+}) {
+  const pct = Math.round(step / total * 100);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100%',
+      height: 4,
+      background: 'rgba(170,205,224,0.3)',
+      borderRadius: 4,
+      overflow: 'hidden',
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "progress-bar",
+    style: {
+      height: '100%',
+      width: `${pct}%`,
+      background: T.soft,
+      borderRadius: 4
+    }
+  }));
+}
+function BodyFeel({
+  text,
+  color,
+  pastel
+}) {
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      background: pastel,
+      color,
+      border: `1px solid ${color}44`,
+      borderRadius: 20,
+      padding: '2px 10px',
+      fontSize: 11,
+      fontWeight: 600,
+      whiteSpace: 'nowrap',
+      marginLeft: 8
+    }
+  }, "\u2726 ", text);
+}
+function LucidLogo({
+  size = 42
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Gloock', Georgia, serif",
+      fontSize: size,
+      letterSpacing: 6,
+      userSelect: 'none',
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#303840'
+    }
+  }, "L"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'relative',
+      display: 'inline-block'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: 'linear-gradient(180deg, #1B527A 0%, #34B2C4 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      display: 'inline-block'
+    }
+  }, "U"), /*#__PURE__*/React.createElement("svg", {
+    style: {
+      position: 'absolute',
+      bottom: 8,
+      left: '50%',
+      transform: 'translateX(-50%)'
+    },
+    width: "10",
+    height: "14",
+    viewBox: "0 0 20 28",
+    xmlns: "http://www.w3.org/2000/svg"
+  }, /*#__PURE__*/React.createElement("ellipse", {
+    cx: "10",
+    cy: "20",
+    rx: "7.5",
+    ry: "6.5",
+    fill: "#34B2C4"
+  }), /*#__PURE__*/React.createElement("polygon", {
+    points: "10,2 3.5,13.5 16.5,13.5",
+    fill: "#34B2C4"
+  }))), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#303840'
+    }
+  }, "C"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#303840'
+    }
+  }, "I"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#303840'
+    }
+  }, "D"));
+}
+function WelcomeVisual() {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative',
+      width: 160,
+      height: 200,
+      margin: '0 auto 8px'
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 160 200",
+    width: "160",
+    height: "200",
+    xmlns: "http://www.w3.org/2000/svg"
+  }, /*#__PURE__*/React.createElement("ellipse", {
+    cx: "80",
+    cy: "38",
+    rx: "26",
+    ry: "30",
+    fill: "#D4E8F5"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "71",
+    y: "64",
+    width: "18",
+    height: "14",
+    rx: "6",
+    fill: "#C5DDEF"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M44 78 Q44 68 80 70 Q116 68 116 78 L120 148 Q120 158 80 160 Q40 158 40 148 Z",
+    fill: "#BDD8EE"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M46 82 Q30 96 24 128 Q22 140 30 142 Q36 144 40 132 Q46 108 56 96 Z",
+    fill: "#C5DDEF"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M114 82 Q130 96 136 128 Q138 140 130 142 Q124 144 120 132 Q114 108 104 96 Z",
+    fill: "#C5DDEF"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M54 154 Q50 172 46 188 Q44 196 54 198 Q62 199 64 190 L70 158 Z",
+    fill: "#BDD8EE"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M106 154 Q110 172 114 188 Q116 196 106 198 Q98 199 96 190 L90 158 Z",
+    fill: "#BDD8EE"
+  }), /*#__PURE__*/React.createElement("circle", {
+    className: "ring1",
+    cx: "80",
+    cy: "108",
+    r: "16",
+    fill: "none",
+    stroke: "#7AAFC8",
+    strokeWidth: "1.5",
+    opacity: "0.5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    className: "ring2",
+    cx: "80",
+    cy: "108",
+    r: "16",
+    fill: "none",
+    stroke: "#7AAFC8",
+    strokeWidth: "1",
+    opacity: "0.4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    className: "ring3",
+    cx: "80",
+    cy: "108",
+    r: "16",
+    fill: "none",
+    stroke: "#7AAFC8",
+    strokeWidth: "0.5",
+    opacity: "0.3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    className: "orb",
+    cx: "80",
+    cy: "108",
+    r: "14",
+    fill: "#7AAFC8",
+    opacity: "0.85"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "75",
+    cy: "104",
+    r: "4",
+    fill: "white",
+    opacity: "0.4"
+  })));
+}
+
+/* ─── Onboarding screen ─── */
+function OnboardScreen({
+  onFinish
+}) {
+  const [slide, setSlide] = useState(0);
+  const total = 3;
+  const ios = isIOS();
+  const standalone = isStandalone();
+  const slides = [{
+    icon: '🌸',
+    title: 'Name your feelings',
+    body: 'Lucid uses the Feelings Wheel — a research-backed map of human emotion. Most of us default to "fine" or "stressed." Lucid helps you go deeper, one word at a time.'
+  }, {
+    icon: '✨',
+    title: 'Precision creates clarity',
+    body: `There's a real difference between "I'm upset" and "I feel betrayed." The right word is the first step to understanding yourself — and communicating better with the people who matter.`,
+    contrast: ['"fine"', '"elated"', '"hollow"', '"betrayed"']
+  }, {
+    icon: '🔒',
+    title: 'Your data stays with you',
+    body: 'Everything you log lives on your device. Nothing leaves this app. Lucid is a private space — just for you.',
+    showInstall: ios && !standalone
+  }];
+  const s = slides[slide];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app-shell",
+    style: {
+      justifyContent: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "fadeUp",
+    style: {
+      maxWidth: 420,
+      width: '100%',
+      padding: '44px 28px 48px',
+      textAlign: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(LucidLogo, {
+    size: 32
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      justifyContent: 'center',
+      margin: '22px 0 32px'
+    }
+  }, slides.map((_, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "onboard-dot",
+    style: {
+      width: i === slide ? 22 : 6,
+      background: i === slide ? T.primary : T.ghost
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 54,
+      marginBottom: 20
+    }
+  }, s.icon), /*#__PURE__*/React.createElement("h2", {
+    style: {
+      fontSize: 24,
+      fontWeight: 700,
+      color: T.primary,
+      marginBottom: 14
+    }
+  }, s.title), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 15,
+      color: T.mid,
+      lineHeight: 1.7,
+      marginBottom: s.contrast || s.showInstall ? 20 : 36
+    }
+  }, s.body), s.contrast && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      justifyContent: 'center',
+      flexWrap: 'wrap',
+      marginBottom: 36
+    }
+  }, s.contrast.map((w, i) => {
+    const styles = [{
+      bg: '#F5F5F5',
+      color: '#999',
+      border: '#DDD'
+    }, {
+      bg: '#FEF9EC',
+      color: '#B8860B',
+      border: '#F9C74F66'
+    }, {
+      bg: '#EAF4FA',
+      color: '#2E6F8E',
+      border: '#74B3CE66'
+    }, {
+      bg: '#FEEFEE',
+      color: '#C0392B',
+      border: '#F07167AA'
+    }];
+    const st = styles[i] || styles[0];
+    return /*#__PURE__*/React.createElement("span", {
+      key: i,
+      style: {
+        background: st.bg,
+        color: st.color,
+        border: `1.5px solid ${st.border}`,
+        borderRadius: 20,
+        padding: '5px 14px',
+        fontSize: 14,
+        fontWeight: 600
+      }
+    }, w);
+  })), s.showInstall && /*#__PURE__*/React.createElement("div", {
+    className: "install-banner",
+    style: {
+      width: '100%',
+      marginBottom: 28
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: T.primary,
+      marginBottom: 6,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5
+    }
+  }, "\uD83D\uDCF2 Add to Home Screen"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: T.mid,
+      lineHeight: 1.6
+    }
+  }, "For daily reminders on iOS, tap ", /*#__PURE__*/React.createElement("strong", null, "Share \u238B"), " then ", /*#__PURE__*/React.createElement("strong", null, "\"Add to Home Screen\""), " in Safari to install Lucid.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      width: '100%'
+    }
+  }, slide < total - 1 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    onClick: onFinish,
+    style: {
+      flex: '0 0 auto',
+      background: 'transparent',
+      color: T.ghost,
+      border: 'none',
+      padding: '14px 16px',
+      fontSize: 14,
+      cursor: 'pointer'
+    }
+  }, "Skip"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSlide(s => s + 1),
+    style: {
+      flex: 1,
+      background: T.cta,
+      color: 'white',
+      border: 'none',
+      borderRadius: 50,
+      padding: '14px',
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: 'pointer',
+      boxShadow: `0 4px 16px ${T.ctaShadow}`
+    }
+  }, "Next \u2192")) : /*#__PURE__*/React.createElement("button", {
+    onClick: onFinish,
+    style: {
+      flex: 1,
+      background: T.cta,
+      color: 'white',
+      border: 'none',
+      borderRadius: 50,
+      padding: '14px',
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: 'pointer',
+      boxShadow: `0 4px 16px ${T.ctaShadow}`
+    }
+  }, "Get Started")),
+    React.createElement("p", {
+      style: {
+        fontSize: 11,
+        color: T.ghost,
+        textAlign: 'center',
+        lineHeight: 1.6,
+        marginTop: 16,
+        padding: '0 8px'
+      }
+    }, "Emotional awareness is one part of wellbeing. For ongoing distress, a licensed mental health professional can offer personalized support.")
+  ));
+}
+
+/* ─── Nav bar ─── */
+function NavBar({
+  view,
+  onNav
+}) {
+  const items = [{
+    id: VIEW.CHECKIN,
+    label: 'Check In',
+    icon: /*#__PURE__*/React.createElement("svg", {
+      width: "22",
+      height: "22",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "10"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "12",
+      y1: "8",
+      x2: "12",
+      y2: "16"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "8",
+      y1: "12",
+      x2: "16",
+      y2: "12"
+    }))
+  }, {
+    id: VIEW.HISTORY,
+    label: 'History',
+    icon: /*#__PURE__*/React.createElement("svg", {
+      width: "22",
+      height: "22",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: "3",
+      y: "4",
+      width: "18",
+      height: "18",
+      rx: "2"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "16",
+      y1: "2",
+      x2: "16",
+      y2: "6"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "8",
+      y1: "2",
+      x2: "8",
+      y2: "6"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "3",
+      y1: "10",
+      x2: "21",
+      y2: "10"
+    }))
+  }, {
+    id: VIEW.STATS,
+    label: 'Insights',
+    icon: /*#__PURE__*/React.createElement("svg", {
+      width: "22",
+      height: "22",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "18",
+      y1: "20",
+      x2: "18",
+      y2: "10"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "12",
+      y1: "20",
+      x2: "12",
+      y2: "4"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: "6",
+      y1: "20",
+      x2: "6",
+      y2: "14"
+    }))
+  }, {
+    id: VIEW.SETTINGS,
+    label: 'Settings',
+    icon: /*#__PURE__*/React.createElement("svg", {
+      width: "22",
+      height: "22",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: "12",
+      cy: "12",
+      r: "3"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+    }))
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "nav-bar"
+  }, items.map(item => {
+    const active = view === item.id;
+    return /*#__PURE__*/React.createElement("div", {
+      key: item.id,
+      className: "nav-item",
+      onClick: () => onNav(item.id),
+      style: {
+        color: active ? T.primary : T.ghost
+      }
+    }, item.icon, /*#__PURE__*/React.createElement("span", {
+      className: "nav-label",
+      style: {
+        color: active ? T.primary : T.ghost
+      }
+    }, item.label));
+  }));
+}
+
+/* ─── Entry Card ─── */
+/* ─── Shared Moments helpers ─── */
+function buildShareText(entry) {
+  const feeling = entry.tertiary ? entry.tertiary.label
+    : entry.secondary ? entry.secondary.label
+    : entry.core ? entry.core.label : 'a feeling';
+  const lines = [];
+  lines.push('I felt ' + feeling + ' today.');
+  if (entry.core && entry.secondary && entry.tertiary) {
+    lines.push(entry.core.label + ' \u2192 ' + entry.secondary.label + ' \u2192 ' + entry.tertiary.label);
+  } else if (entry.core && entry.secondary) {
+    lines.push(entry.core.label + ' \u2192 ' + entry.secondary.label);
+  }
+  if (entry.connection) lines.push('Connected to: ' + entry.connection.icon + ' ' + entry.connection.label);
+  if (entry.note) lines.push('\n\u201C' + entry.note + '\u201D');
+  lines.push('\n\u2014 ' + formatDate(entry.timestamp) + ', ' + formatTime(entry.timestamp));
+  lines.push('via Lucid');
+  return lines.join('\n');
+}
+
+
+/* ─── Consider This — nudge sets (keyed by core emotion id) ─── */
+const NUDGES = {
+  happy: [
+    "Write down one thing you're grateful for right now. Even something small counts.",
+    "What does this feeling call you to do today? Find the verb — lean, reach, create, connect.",
+    "Tell someone. Who in your life would love to hear that you're feeling this way?"
+  ],
+  sad: [
+    "Change your surroundings, even briefly. Step outside, put water on your face, take a slow walk.",
+    "You don't have to fix this right now. Sadness moves when it's felt, not when it's fought.",
+    "Think of one person who feels safe to you. You don't have to explain everything — just reaching out counts."
+  ],
+  angry: [
+    "Before you act, write. Get it out on paper first — your brain is running hot right now.",
+    "You don't have to respond or resolve this today. Give yourself permission to pause.",
+    "Is there one person you trust enough to say \"I'm really angry about something\"? That conversation might be worth having."
+  ],
+  fearful: [
+    "Name what's actually true right now. Fear lives in the future — what do you know for certain in this moment?",
+    "What's one thing you can control today? Just one. Do that thing.",
+    "Give the fear five minutes. Set a timer, let it exist without fighting it, then return to what's in front of you."
+  ],
+  disgusted: [
+    "Disgust usually points somewhere. What does this reaction tell you about what you value or what felt crossed?",
+    "Notice where you feel this in your body. Don't try to change it — just locate it. That's enough for now.",
+    "Is this something to process on your own first, or is there a conversation worth having? You don't have to decide right now."
+  ],
+  surprised: [
+    "Give yourself a moment to land. Surprise briefly resets the mind — you don't need to react right away.",
+    "Let curiosity lead. What does this surprise tell you about what you hoped for or expected?",
+    "Surprise is meant to be shared. Who would you want to tell about this?"
+  ]
+};
+
+function ShareModal({ entry, onClose }) {
+  const [copyState, setCopyState] = useState(null); // null | 'copied'
+  const coreColor  = entry.core ? entry.core.color    : '#7AAFC8';
+  const corePastel = entry.core ? entry.core.pastel   : '#EEF6FF';
+  const coreDark   = entry.core ? entry.core.darkColor: '#1B527A';
+  const feeling    = entry.tertiary ? entry.tertiary.label
+    : entry.secondary ? entry.secondary.label
+    : entry.core ? entry.core.label : 'Check-in';
+  const canShare   = !!navigator.share;
+
+  function handleCopy() {
+    const text = buildShareText(entry);
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyState('copied');
+      setTimeout(() => setCopyState(null), 2000);
+    }).catch(() => {
+      // fallback: execCommand
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      setCopyState('copied');
+      setTimeout(() => setCopyState(null), 2000);
+    });
+  }
+
+  function handleShare() {
+    if (!navigator.share) { handleCopy(); return; }
+    navigator.share({
+      title: 'I felt ' + feeling + ' today',
+      text: buildShareText(entry)
+    }).catch(() => {});
+  }
+
+  return React.createElement(React.Fragment, null,
+    React.createElement("div", {
+      className: "share-overlay",
+      onClick: e => { if (e.target === e.currentTarget) onClose(); }
+    },
+      React.createElement("div", { className: "share-card-wrap" },
+        React.createElement("div", { className: "share-card" },
+          /* color top bar */
+          React.createElement("div", {
+            className: "share-card-top-bar",
+            style: { background: 'linear-gradient(90deg, ' + coreColor + ', ' + coreDark + ')' }
+          }),
+          React.createElement("div", { className: "share-card-body" },
+            /* icon + feeling name */
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
+              React.createElement("span", { style: { fontSize: 36, lineHeight: 1 } },
+                entry.core ? entry.core.icon : '💭'
+              ),
+              React.createElement("div", null,
+                React.createElement("div", {
+                  style: { fontSize: 22, fontWeight: 700, color: coreDark, lineHeight: 1.2 }
+                }, feeling),
+                entry.tertiary && entry.tertiary.definition &&
+                  React.createElement("div", {
+                    style: { fontSize: 12, color: '#4A8BAD', marginTop: 3, lineHeight: 1.4 }
+                  }, entry.tertiary.definition)
+              )
+            ),
+            /* emotion chain breadcrumb */
+            (entry.core && entry.secondary) &&
+              React.createElement("div", { className: "share-chain" },
+                React.createElement("span", {
+                  style: { background: corePastel, color: coreDark, borderRadius: 20,
+                    padding: '3px 10px', fontSize: 12, fontWeight: 600 }
+                }, entry.core.label),
+                entry.secondary && React.createElement(React.Fragment, null,
+                  React.createElement("span", { className: "share-chain-arrow" }, "\u203A"),
+                  React.createElement("span", {
+                    style: { background: corePastel, color: coreDark, borderRadius: 20,
+                      padding: '3px 10px', fontSize: 12, fontWeight: 600 }
+                  }, entry.secondary.label)
+                ),
+                entry.tertiary && React.createElement(React.Fragment, null,
+                  React.createElement("span", { className: "share-chain-arrow" }, "\u203A"),
+                  React.createElement("span", {
+                    style: { background: coreColor + '33', color: coreDark, borderRadius: 20,
+                      padding: '3px 10px', fontSize: 12, fontWeight: 700,
+                      border: '1px solid ' + coreColor + '55' }
+                  }, entry.tertiary.label)
+                )
+              ),
+            /* body feel pill */
+            entry.tertiary && entry.tertiary.bodyFeel &&
+              React.createElement("div", { style: { marginBottom: 10 } },
+                React.createElement("span", {
+                  style: { background: corePastel, color: coreDark,
+                    border: '1px solid ' + coreColor + '44',
+                    borderRadius: 20, padding: '3px 10px',
+                    fontSize: 11, fontWeight: 600 }
+                }, '\u2726 ' + entry.tertiary.bodyFeel)
+              ),
+            /* connection */
+            entry.connection &&
+              React.createElement("div", {
+                style: { display: 'flex', alignItems: 'center', gap: 6,
+                  marginBottom: entry.note ? 10 : 0,
+                  color: '#4A8BAD', fontSize: 13 }
+              },
+                React.createElement("span", { style: { fontSize: 16 } }, entry.connection.icon),
+                React.createElement("span", null, entry.connection.label)
+              ),
+            /* note */
+            entry.note &&
+              React.createElement("div", {
+                style: { background: '#F8FBFE', borderRadius: 10,
+                  padding: '10px 12px', borderLeft: '3px solid ' + coreColor,
+                  marginBottom: 4 }
+              },
+                React.createElement("div", {
+                  style: { fontSize: 13, color: '#2E5F7A', fontStyle: 'italic', lineHeight: 1.6 }
+                }, '\u201C' + entry.note + '\u201D')
+              ),
+            /* date + app credit */
+            React.createElement("div", {
+              style: { display: 'flex', justifyContent: 'space-between',
+                alignItems: 'center', marginTop: 14 }
+            },
+              React.createElement("span", { style: { fontSize: 11, color: '#A8CCE0' } },
+                formatDate(entry.timestamp) + ' \u00B7 ' + formatTime(entry.timestamp)
+              ),
+              React.createElement("span", {
+                style: { fontSize: 11, color: '#A8CCE0', fontWeight: 600, letterSpacing: 1 }
+              }, 'LUCID')
+            )
+          )
+        ),
+        /* action buttons */
+        React.createElement("div", { className: "share-actions", style: { marginTop: 12 } },
+          React.createElement("button", {
+            className: "share-btn-secondary",
+            onClick: handleCopy
+          }, copyState === 'copied' ? '\u2713 Copied!' : '\uD83D\uDCCB Copy'),
+          canShare
+            ? React.createElement("button", { className: "share-btn-primary", onClick: handleShare },
+                '\u2197 Share')
+            : null
+        ),
+        React.createElement("div", { className: "share-close-row" },
+          React.createElement("button", { className: "share-close-btn", onClick: onClose }, "Close")
+        )
+      )
+    ),
+    copyState === 'copied' &&
+      React.createElement("div", { className: "copy-toast" }, '\u2713 Copied to clipboard')
+  );
+}
+
+function EntryCard({
+  entry,
+  onDelete
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const coreColor = entry.core ? entry.core.color : T.soft;
+  const corePastel = entry.core ? entry.core.pastel : '#EEF6FF';
+  const coreDark = entry.core ? entry.core.darkColor : T.primary;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "entry-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      flex: 1,
+      cursor: 'pointer'
+    },
+    onClick: () => setExpanded(x => !x)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22
+    }
+  }, entry.core ? entry.core.icon : '💭'), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: coreDark
+    }
+  }, entry.tertiary ? entry.tertiary.label : entry.secondary ? entry.secondary.label : entry.core ? entry.core.label : 'Check-in'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.mid,
+      marginTop: 1
+    }
+  }, formatTime(entry.timestamp), entry.connection ? ` · ${entry.connection.icon} ${entry.connection.label}` : ''))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 4,
+      alignItems: 'center'
+    }
+  }, entry.note && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: T.ghost
+    }
+  }, "\uD83D\uDCDD"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: T.ghost,
+      cursor: 'pointer',
+      padding: '2px 6px'
+    },
+    onClick: () => setExpanded(x => !x)
+  }, expanded ? '▲' : '▼'))), expanded && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      paddingTop: 12,
+      borderTop: `1px solid ${T.border}`
+    }
+  }, entry.tertiary && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 3
+    }
+  }, "Feeling"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.primary
+    }
+  }, entry.tertiary.definition), entry.tertiary.bodyFeel && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: corePastel,
+      color: coreDark,
+      border: `1px solid ${coreColor}33`,
+      borderRadius: 20,
+      padding: '2px 8px',
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "\u2726 ", entry.tertiary.bodyFeel))), entry.note && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 3
+    }
+  }, "Note"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.primary,
+      fontStyle: 'italic',
+      lineHeight: 1.6
+    }
+  }, "\"", entry.note, "\"")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 8
+    }
+  },
+  /* Share button */
+  React.createElement("span", {
+    className: "entry-share-btn",
+    onClick: () => setShowShare(true)
+  }, "\u2197 Share"),
+  /* Delete */
+  !confirmDelete ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: '#C0392B',
+      cursor: 'pointer',
+      opacity: 0.6
+    },
+    onClick: () => setConfirmDelete(true)
+  }, "Delete") : /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: '#C0392B',
+      cursor: 'pointer'
+    }
+  }, "Delete this entry?\xA0", /*#__PURE__*/React.createElement("strong", {
+    onClick: onDelete,
+    style: {
+      cursor: 'pointer'
+    }
+  }, "Yes"), "\xA0\xB7\xA0", /*#__PURE__*/React.createElement("span", {
+    onClick: () => setConfirmDelete(false)
+  }, "No")))),
+  /* Share modal portal */
+  showShare && React.createElement(ShareModal, {
+    entry: entry,
+    onClose: () => setShowShare(false)
+  }));
+}
+
+/* ─── History screen ─── */
+function HistoryScreen({
+  entries,
+  onDelete
+}) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const [selectedDay, setSelectedDay] = useState(todayStr());
+  const [searchQuery, setSearchQuery] = useState('');
+  const byDate = groupByDate(entries);
+  const calDays = getCalDays(year, month);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const today = todayStr();
+  const isSearching = searchQuery.trim().length > 0;
+  const searchResults = isSearching ? [...entries].filter(e => matchesQuery(e, searchQuery.trim())).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) : null;
+  function prevMonth() {
+    setSelectedDay(null);
+    if (month === 0) {
+      setYear(y => y - 1);
+      setMonth(11);
+    } else setMonth(m => m - 1);
+  }
+  function nextMonth() {
+    setSelectedDay(null);
+    if (month === 11) {
+      setYear(y => y + 1);
+      setMonth(0);
+    } else setMonth(m => m + 1);
+  }
+  const selectedEntries = selectedDay ? byDate[selectedDay] || [] : [];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "nav-screen",
+    style: {
+      padding: '20px 20px 0'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16,
+      paddingTop: 4
+    }
+  }, /*#__PURE__*/React.createElement(LucidLogo, {
+    size: 28
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.ghost,
+      fontSize: 10,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      marginTop: 2
+    }
+  }, "history")), /*#__PURE__*/React.createElement("div", {
+    className: "search-wrap"
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: "search-icon",
+    width: "16",
+    height: "16",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "#1B527A",
+    strokeWidth: "2.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "11",
+    cy: "11",
+    r: "8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "21",
+    y1: "21",
+    x2: "16.65",
+    y2: "16.65"
+  })), /*#__PURE__*/React.createElement("input", {
+    className: "search-input",
+    value: searchQuery,
+    onChange: e => setSearchQuery(e.target.value),
+    placeholder: "Search feelings, notes\u2026",
+    type: "search"
+  })), isSearching && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10
+    }
+  }, searchResults.length, " result", searchResults.length !== 1 ? 's' : '', " for \"", searchQuery, "\""), searchResults.length === 0 ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: T.ghost,
+      fontStyle: 'italic'
+    }
+  }, "No entries match that search.") : searchResults.map(entry => /*#__PURE__*/React.createElement("div", {
+    key: entry.id,
+    className: "entry-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22
+    }
+  }, entry.core ? entry.core.icon : '💭'), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: entry.core ? entry.core.darkColor : T.primary
+    }
+  }, /*#__PURE__*/React.createElement(Highlight, {
+    text: entry.tertiary ? entry.tertiary.label : entry.core ? entry.core.label : 'Check-in',
+    query: searchQuery
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.mid,
+      marginTop: 1
+    }
+  }, formatDate(entry.timestamp), " \xB7 ", formatTime(entry.timestamp)), entry.note && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.mid,
+      marginTop: 4,
+      fontStyle: 'italic'
+    }
+  }, "\"", /*#__PURE__*/React.createElement(Highlight, {
+    text: entry.note,
+    query: searchQuery
+  }), "\""))))))), !isSearching && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 20,
+      padding: '16px 14px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: prevMonth,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: T.mid,
+      fontSize: 18,
+      cursor: 'pointer',
+      padding: '4px 8px'
+    }
+  }, "\u2039"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: T.primary,
+      fontSize: 15
+    }
+  }, monthNames[month], " ", year), /*#__PURE__*/React.createElement("button", {
+    onClick: nextMonth,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: T.mid,
+      fontSize: 18,
+      cursor: 'pointer',
+      padding: '4px 8px'
+    }
+  }, "\u203A")), /*#__PURE__*/React.createElement("div", {
+    className: "cal-header-row"
+  }, ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      textAlign: 'center',
+      fontSize: 10,
+      fontWeight: 700,
+      color: T.ghost,
+      letterSpacing: 0.5
+    }
+  }, d))), /*#__PURE__*/React.createElement("div", {
+    className: "cal-grid"
+  }, calDays.map((day, i) => {
+    const key = day.padding ? null : dayKey(day.year, day.month, day.date);
+    const dayEntries = key ? byDate[key] || [] : [];
+    const isToday = key === today;
+    const isSelected = key === selectedDay;
+    const hasEntry = dayEntries.length > 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: `cal-day${hasEntry ? ' has-entry' : ''}${isSelected && !day.padding ? ' selected' : ''}`,
+      onClick: () => !day.padding && hasEntry && setSelectedDay(key)
+    }, /*#__PURE__*/React.createElement("span", {
+      className: `cal-num${day.padding ? ' muted' : ''}${isToday ? ' today-num' : ''}`
+    }, day.date), hasEntry && /*#__PURE__*/React.createElement("div", {
+      className: "dots-row"
+    }, dayEntries.slice(0, 3).map((e, j) => /*#__PURE__*/React.createElement("div", {
+      key: j,
+      className: "dot",
+      style: {
+        background: e.core ? e.core.color : T.soft
+      }
+    })), dayEntries.length > 3 && /*#__PURE__*/React.createElement("div", {
+      className: "dot",
+      style: {
+        background: T.ghost
+      }
+    })));
+  }))), selectedDay && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10
+    }
+  }, selectedDay === today ? 'Today' : formatDate(selectedDay + 'T12:00:00'), selectedEntries.length > 0 ? ` · ${selectedEntries.length} check-in${selectedEntries.length > 1 ? 's' : ''}` : ''), selectedEntries.length === 0 ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: T.ghost,
+      fontStyle: 'italic'
+    }
+  }, "No check-ins on this day.") : selectedEntries.map(entry => /*#__PURE__*/React.createElement(EntryCard, {
+    key: entry.id,
+    entry: entry,
+    onDelete: () => onDelete(entry.id)
+  }))), entries.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '24px 0',
+      color: T.ghost
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "\uD83D\uDCC5"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14
+    }
+  }, "Your check-ins will appear here."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      marginTop: 6,
+      opacity: 0.8
+    }
+  }, "Start your first one from the Check In tab."))));
+}
+
+/* ─── Stats screen ─── */
+function StatsScreen({
+  entries
+}) {
+  const streak = calcStreak(entries);
+  const weekCount = getWeekCount(entries);
+  const mostCommon = getMostCommon(entries);
+  const byDate = groupByDate(entries);
+
+  // Core emotion breakdown
+  const coreCounts = {};
+  emotions.forEach(e => {
+    coreCounts[e.id] = 0;
+  });
+  entries.forEach(e => {
+    if (e.core) coreCounts[e.core.id] = (coreCounts[e.core.id] || 0) + 1;
+  });
+  const maxCore = Math.max(...Object.values(coreCounts), 1);
+
+  // Recent entries
+  const recent = [...entries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "nav-screen",
+    style: {
+      padding: '20px 20px 0'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20,
+      paddingTop: 4
+    }
+  }, /*#__PURE__*/React.createElement(LucidLogo, {
+    size: 28
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.ghost,
+      fontSize: 10,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      marginTop: 2
+    }
+  }, "insights")), entries.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '40px 0',
+      color: T.ghost
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "\uD83D\uDCCA"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14
+    }
+  }, "Insights will appear after your first check-in.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr',
+      gap: 10,
+      marginBottom: 16
+    }
+  }, [{
+    label: 'Total',
+    value: entries.length,
+    icon: '💙'
+  }, {
+    label: 'This Week',
+    value: weekCount,
+    icon: '📅'
+  }, {
+    label: 'Day Streak',
+    value: streak,
+    icon: '🔥'
+  }].map(stat => /*#__PURE__*/React.createElement("div", {
+    key: stat.label,
+    style: {
+      background: T.card,
+      borderRadius: 16,
+      padding: '14px 10px',
+      textAlign: 'center',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      marginBottom: 4
+    }
+  }, stat.icon), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: T.primary
+    }
+  }, stat.value), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: T.ghost,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5
+    }
+  }, stat.label)))), mostCommon && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 16,
+      padding: '14px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 6
+    }
+  }, "Most Frequent"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 28
+    }
+  }, (() => {
+    for (const em of emotions) {
+      for (const sec of em.secondary) {
+        for (const ter of sec.tertiary) {
+          if (ter.label === mostCommon[0]) return em.icon;
+        }
+      }
+    }
+    return '💭';
+  })()), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 17,
+      fontWeight: 700,
+      color: T.primary
+    }
+  }, mostCommon[0]), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.mid
+    }
+  }, mostCommon[1], " time", mostCommon[1] > 1 ? 's' : '')))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 16,
+      padding: '14px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 12
+    }
+  }, "By Category"), emotions.map(em => {
+    const count = coreCounts[em.id] || 0;
+    const pct = Math.round(count / maxCore * 100);
+    return /*#__PURE__*/React.createElement("div", {
+      key: em.id,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        width: 22,
+        textAlign: 'center'
+      }
+    }, em.icon), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: T.primary,
+        fontWeight: 500,
+        width: 70
+      }
+    }, em.label), /*#__PURE__*/React.createElement("div", {
+      className: "stat-bar-bg"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "stat-bar-fill",
+      style: {
+        width: `${pct}%`,
+        background: em.color
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: T.mid,
+        width: 20,
+        textAlign: 'right'
+      }
+    }, count));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10
+    }
+  }, "Recent Check-Ins"), recent.map(entry => /*#__PURE__*/React.createElement("div", {
+    key: entry.id,
+    className: "entry-card",
+    style: {
+      cursor: 'default'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, entry.core ? entry.core.icon : '💭'), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: entry.core ? entry.core.darkColor : T.primary
+    }
+  }, entry.tertiary ? entry.tertiary.label : entry.core ? entry.core.label : 'Check-in'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.mid
+    }
+  }, formatDate(entry.timestamp), " \xB7 ", formatTime(entry.timestamp)))))))));
+}
+
+/* ─── Settings screen ─── */
+function SettingsScreen({
+  prefs,
+  onPrefsChange,
+  onClearData,
+  notifTimerRef
+}) {
+  const [name, setName] = useState(prefs.name || '');
+  const [reminders, setReminders] = useState(prefs.reminders || false);
+  const [reminderTime, setReminderTime] = useState(prefs.reminderTime || '20:00');
+  const [notifPerm, setNotifPerm] = useState(() => 'Notification' in window ? Notification.permission : 'unsupported');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  function handleNameBlur() {
+    const updated = {
+      ...prefs,
+      name: name.trim()
+    };
+    onPrefsChange(updated);
+  }
+  function handleReminders() {
+    const newVal = !reminders;
+    setReminders(newVal);
+    const updated = {
+      ...prefs,
+      reminders: newVal,
+      reminderTime
+    };
+    onPrefsChange(updated);
+    if (newVal && notifPerm === 'default') {
+      requestNotifPermission().then(function (result) {
+        setNotifPerm(result);
+        if (result === 'granted') scheduleReminder(reminderTime, notifTimerRef);
+      });
+    } else if (newVal && notifPerm === 'granted') {
+      scheduleReminder(reminderTime, notifTimerRef);
+    }
+  }
+  function handleEnableNotif() {
+    requestNotifPermission().then(function (result) {
+      setNotifPerm(result);
+      if (result === 'granted' && reminders) scheduleReminder(reminderTime, notifTimerRef);
+    });
+  }
+  function handleTimeChange(t) {
+    setReminderTime(t);
+    const updated = {
+      ...prefs,
+      reminders,
+      reminderTime: t
+    };
+    onPrefsChange(updated);
+    if (reminders && notifPerm === 'granted') scheduleReminder(t, notifTimerRef);
+  }
+  function handleClearData() {
+    localStorage.removeItem(STORAGE_KEY);
+    setShowClearConfirm(false);
+    if (onClearData) onClearData();
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "nav-screen",
+    style: {
+      padding: '20px 20px 0'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20,
+      paddingTop: 4
+    }
+  }, /*#__PURE__*/React.createElement(LucidLogo, {
+    size: 28
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: T.ghost,
+      fontSize: 10,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      marginTop: 2
+    }
+  }, "settings")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 20,
+      padding: '18px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10
+    }
+  }, "Your Name"), /*#__PURE__*/React.createElement("input", {
+    className: "settings-input",
+    value: name,
+    onChange: e => setName(e.target.value),
+    onBlur: handleNameBlur,
+    onKeyDown: e => e.key === 'Enter' && handleNameBlur(),
+    placeholder: "How would you like to be greeted?"
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: T.ghost,
+      marginTop: 6
+    }
+  }, "Used in your welcome greeting.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 20,
+      padding: '18px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: T.primary
+    }
+  }, "Daily Reminder"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.mid,
+      marginTop: 3
+    }
+  }, "Gentle nudge to check in each day")), /*#__PURE__*/React.createElement("div", {
+    className: "toggle-track",
+    style: {
+      background: reminders ? T.primary : T.ghost
+    },
+    onClick: handleReminders
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "toggle-thumb",
+    style: {
+      left: reminders ? '21px' : '3px'
+    }
+  }))), reminders && notifPerm === 'default' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: T.mid,
+      marginBottom: 8
+    }
+  }, "Enable notifications to get a daily reminder."), /*#__PURE__*/React.createElement("button", {
+    className: "notif-btn",
+    onClick: handleEnableNotif
+  }, "\uD83D\uDD14 Enable Notifications")), reminders && notifPerm === 'granted' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 6
+    }
+  }, "Remind me at"), /*#__PURE__*/React.createElement("input", {
+    type: "time",
+    className: "time-input",
+    value: reminderTime,
+    onChange: e => handleTimeChange(e.target.value)
+  }), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: T.ghost,
+      marginTop: 6
+    }
+  }, "\u2713 Notifications are enabled for this device.")), reminders && notifPerm === 'denied' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: '#C0392B'
+    }
+  }, "Notifications are blocked in your browser settings. To re-enable, open browser Site Settings and allow notifications for this page.")), reminders && notifPerm === 'unsupported' && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: T.ghost,
+      marginTop: 10,
+      fontStyle: 'italic'
+    }
+  }, "Your browser doesn't support notifications. You can still check in any time.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 20,
+      padding: '18px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 8
+    }
+  }, "About Lucid"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: T.mid,
+      lineHeight: 1.7
+    }
+  }, "Lucid is a personal emotional companion built on the Feelings Wheel. It gives you language to understand yourself \u2014 and the clarity to share that with the people who matter."), React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: T.mid,
+      lineHeight: 1.6,
+      marginTop: 10
+    }
+  }, "Emotional awareness is one part of wellbeing. For ongoing distress, a licensed mental health professional can offer personalized support."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      fontSize: 12,
+      color: T.ghost
+    }
+  }, "Version 2.0 \xB7 All data stored locally on your device.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: T.card,
+      borderRadius: 20,
+      padding: '18px 16px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      marginBottom: 32
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.soft,
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 10
+    }
+  }, "Data"), !showClearConfirm ? /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowClearConfirm(true),
+    style: {
+      background: 'none',
+      border: `1.5px solid #F07167`,
+      borderRadius: 10,
+      padding: '8px 16px',
+      fontSize: 13,
+      color: '#C0392B',
+      cursor: 'pointer',
+      fontWeight: 600
+    }
+  }, "Clear All Check-In Data") : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: '#C0392B',
+      marginBottom: 10
+    }
+  }, "This will permanently delete all your entries. Are you sure?"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: handleClearData,
+    style: {
+      background: '#C0392B',
+      border: 'none',
+      borderRadius: 10,
+      padding: '8px 16px',
+      fontSize: 13,
+      color: 'white',
+      cursor: 'pointer',
+      fontWeight: 600
+    }
+  }, "Yes, delete everything"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowClearConfirm(false),
+    style: {
+      background: 'none',
+      border: `1.5px solid ${T.ghost}`,
+      borderRadius: 10,
+      padding: '8px 16px',
+      fontSize: 13,
+      color: T.mid,
+      cursor: 'pointer'
+    }
+  }, "Cancel")))));
+}
+
+/* ─── Main App ─── */
+function App() {
+  const [view, setView] = useState(VIEW.CHECKIN);
+  const [screen, setScreen] = useState(SCREEN.WELCOME);
+  const [entries, setEntries] = useState(() => loadEntries());
+  const [prefs, setPrefs] = useState(() => loadPrefs());
+  const [showOnboard, setShowOnboard] = useState(() => !loadPrefs().onboarded);
+
+  // Refs
+  const notifTimerRef = useRef(null);
+  const installPromptRef = useRef(null);
+
+  // Check-in state
+  const [coreEmotion, setCoreEmotion] = useState(null);
+  const [secondaryEmotion, setSecondaryEmotion] = useState(null);
+  const [tertiaryEmotion, setTertiaryEmotion] = useState(null);
+  const [connection, setConnection] = useState(null);
+  const [note, setNote] = useState('');
+  const [lastEntry, setLastEntry] = useState(null);
+  const [showShareConsider, setShowShareConsider] = useState(false);
+
+  // Effects
+  useEffect(() => {
+    // Register service worker (works on HTTPS / localhost, silent fail on file://)
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE = 'lucid-v2';
+        self.addEventListener('install', e => self.skipWaiting());
+        self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+        self.addEventListener('fetch', e => {
+          e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+            return res;
+          }).catch(() => r)));
+        });
+      `;
+      try {
+        const blob = new Blob([swCode], {
+          type: 'text/javascript'
+        });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+      } catch (e) {}
+    }
+
+    // Capture install prompt
+    const handler = e => {
+      e.preventDefault();
+      installPromptRef.current = e;
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // Schedule notification if already set up
+    const p = loadPrefs();
+    if (p.reminders && 'Notification' in window && Notification.permission === 'granted') {
+      scheduleReminder(p.reminderTime || '20:00', notifTimerRef);
+    }
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+    };
+  }, []);
+  function handlePrefsChange(updated) {
+    setPrefs(updated);
+    savePrefs(updated);
+  }
+  function handleDelete(id) {
+    const updated = deleteEntryFromStore(id);
+    setEntries(updated);
+  }
+  function resetCheckIn() {
+    setCoreEmotion(null);
+    setSecondaryEmotion(null);
+    setTertiaryEmotion(null);
+    setConnection(null);
+    setNote('');
+    setScreen(SCREEN.WELCOME);
+  }
+  function startCheckIn() {
+    resetCheckIn();
+    setView(VIEW.CHECKIN);
+    setScreen(SCREEN.CORE);
+  }
+  function completeCheckIn() {
+    const entry = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      core: coreEmotion ? {
+        id: coreEmotion.id,
+        label: coreEmotion.label,
+        icon: coreEmotion.icon,
+        color: coreEmotion.color,
+        darkColor: coreEmotion.darkColor,
+        pastel: coreEmotion.pastel
+      } : null,
+      secondary: secondaryEmotion ? {
+        id: secondaryEmotion.id,
+        label: secondaryEmotion.label,
+        bodyFeel: secondaryEmotion.bodyFeel
+      } : null,
+      tertiary: tertiaryEmotion ? {
+        id: tertiaryEmotion.id,
+        label: tertiaryEmotion.label,
+        definition: tertiaryEmotion.definition,
+        synonyms: tertiaryEmotion.synonyms,
+        bodyFeel: tertiaryEmotion.bodyFeel
+      } : null,
+      connection: connection || null,
+      note: note.trim()
+    };
+    const updated = saveEntryToStore(entry);
+    setEntries(updated);
+    setLastEntry(entry);
+    setScreen(SCREEN.CONSIDER_THIS);
+  }
+
+  // Show nav on welcome, done, and all non-checkin views
+  const inActiveCheckIn = view === VIEW.CHECKIN && ![SCREEN.WELCOME, SCREEN.DONE].includes(screen);
+  const showNav = !inActiveCheckIn;
+  const greeting = prefs.name ? `Hi, ${prefs.name}` : 'How are you?';
+
+  /* ── Onboarding gate ── */
+  if (showOnboard) {
+    return /*#__PURE__*/React.createElement(OnboardScreen, {
+      onFinish: () => {
+        const updated = {
+          ...prefs,
+          onboarded: true
+        };
+        setPrefs(updated);
+        savePrefs(updated);
+        setShowOnboard(false);
+      }
+    });
+  }
+
+  /* ── Nav screens ── */
+  if (view === VIEW.HISTORY) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement(HistoryScreen, {
+      entries: entries,
+      onDelete: handleDelete
+    }), /*#__PURE__*/React.createElement(NavBar, {
+      view: view,
+      onNav: setView
+    }));
+  }
+  if (view === VIEW.STATS) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement(StatsScreen, {
+      entries: entries
+    }), /*#__PURE__*/React.createElement(NavBar, {
+      view: view,
+      onNav: setView
+    }));
+  }
+  if (view === VIEW.SETTINGS) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement(SettingsScreen, {
+      prefs: prefs,
+      onPrefsChange: handlePrefsChange,
+      onClearData: () => setEntries([]),
+      notifTimerRef: notifTimerRef
+    }), /*#__PURE__*/React.createElement(NavBar, {
+      view: view,
+      onNav: setView
+    }));
+  }
+
+  /* ── Check-in flow ── */
+  const stepMap = {
+    CORE: 1,
+    SECONDARY: 2,
+    TERTIARY: 3,
+    CONNECTION: 4,
+    NOTE: 5
+  };
+  const currentStep = stepMap[screen] || 0;
+
+  // WELCOME
+  if (screen === SCREEN.WELCOME) {
+    const todayCount = entries.filter(e => getDateStr(e.timestamp) === todayStr()).length;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "checkin-frame"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 420,
+        width: '100%',
+        padding: '24px 32px 32px',
+        textAlign: 'center'
+      }
+    }, /*#__PURE__*/React.createElement(LucidLogo, null), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.ghost,
+        fontSize: 11,
+        letterSpacing: 2,
+        textTransform: 'uppercase',
+        marginBottom: 20,
+        fontWeight: 500
+      }
+    }, "know yourself"), /*#__PURE__*/React.createElement(WelcomeVisual, null), /*#__PURE__*/React.createElement("h1", {
+      style: {
+        fontSize: 26,
+        fontWeight: 700,
+        color: T.primary,
+        marginBottom: 8,
+        marginTop: 4
+      }
+    }, greeting), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 15,
+        marginBottom: todayCount > 0 ? 12 : 32,
+        lineHeight: 1.6
+      }
+    }, "Take a moment to check in with yourself. Let's find the words for what you're feeling right now."), todayCount > 0 && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.ghost,
+        fontSize: 12,
+        marginBottom: 24
+      }
+    }, todayCount, " check-in", todayCount > 1 ? 's' : '', " today"), /*#__PURE__*/React.createElement("button", {
+      onClick: startCheckIn,
+      style: {
+        background: T.cta,
+        color: 'white',
+        border: 'none',
+        borderRadius: 50,
+        padding: '14px 40px',
+        fontSize: 16,
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: `0 4px 16px ${T.ctaShadow}`,
+        letterSpacing: 0.3,
+        width: '100%',
+        marginBottom: 12
+      }
+    }, "Begin Check-In"))), /*#__PURE__*/React.createElement(NavBar, {
+      view: VIEW.CHECKIN,
+      onNav: v => {
+        if (v !== VIEW.CHECKIN) setView(v);
+      }
+    }));
+  }
+
+  // DONE
+  if (screen === SCREEN.DONE) {
+    const emoji = coreEmotion ? coreEmotion.icon : '✨';
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "checkin-frame"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 420,
+        width: '100%',
+        padding: 32,
+        textAlign: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "float",
+      style: {
+        fontSize: 64,
+        marginBottom: 16
+      }
+    }, emoji), /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 24,
+        fontWeight: 700,
+        color: T.primary,
+        marginBottom: 12
+      }
+    }, "You checked in"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: T.card,
+        borderRadius: 20,
+        padding: '20px 24px',
+        boxShadow: T.shadowMd,
+        border: `1px solid ${T.border}`,
+        marginBottom: 24,
+        textAlign: 'left'
+      }
+    }, tertiaryEmotion && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: T.soft,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 4
+      }
+    }, "Feeling"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 18,
+        fontWeight: 700,
+        color: T.primary
+      }
+    }, tertiaryEmotion.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: T.mid,
+        marginTop: 4
+      }
+    }, tertiaryEmotion.definition)), connection && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: `1px solid ${T.border}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: T.soft,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 4
+      }
+    }, "Context"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        color: T.primary
+      }
+    }, connection.icon, " ", connection.label)), note && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: `1px solid ${T.border}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: T.soft,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 4
+      }
+    }, "Your Note"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        color: T.primary,
+        fontStyle: 'italic',
+        lineHeight: 1.6
+      }
+    }, "\"", note, "\""))), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 14,
+        marginBottom: 24,
+        lineHeight: 1.6
+      }
+    }, "Awareness is the first step. This entry has been saved."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => {
+        setView(VIEW.HISTORY);
+        resetCheckIn();
+      },
+      style: {
+        flex: 1,
+        background: 'transparent',
+        color: T.primary,
+        border: `1.5px solid ${T.ghost}`,
+        borderRadius: 50,
+        padding: '12px',
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer'
+      }
+    }, "View History"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => {
+        resetCheckIn();
+        setScreen(SCREEN.WELCOME);
+      },
+      style: {
+        flex: 1,
+        background: T.cta,
+        color: 'white',
+        border: 'none',
+        borderRadius: 50,
+        padding: '12px',
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: `0 4px 16px ${T.ctaShadow}`
+      }
+    }, "Check In Again")))), /*#__PURE__*/React.createElement(NavBar, {
+      view: VIEW.CHECKIN,
+      onNav: v => {
+        if (v !== VIEW.CHECKIN) {
+          resetCheckIn();
+          setView(v);
+        }
+      }
+    }));
+  }
+
+  // CONSIDER THIS
+  if (screen === SCREEN.CONSIDER_THIS) {
+    const entry = lastEntry || (entries.length > 0 ? entries[0] : null);
+    const coreId = entry && entry.core ? entry.core.id : 'happy';
+    const coreColor  = entry && entry.core ? entry.core.color    : '#7AAFC8';
+    const corePastel = entry && entry.core ? entry.core.pastel   : '#EEF6FF';
+    const coreDark   = entry && entry.core ? entry.core.darkColor: '#1B527A';
+    const coreIcon   = entry && entry.core ? entry.core.icon     : '✨';
+    const nudges = NUDGES[coreId] || NUDGES['happy'];
+    const feeling = entry
+      ? (entry.tertiary ? entry.tertiary.label : entry.secondary ? entry.secondary.label : entry.core ? entry.core.label : 'Check-in')
+      : 'Check-in';
+
+    return React.createElement("div", { className: "app-shell" },
+      React.createElement("div", { className: "nav-screen" },
+        React.createElement("div", {
+          className: "fadeUp",
+          style: { maxWidth: 480, width: '100%', padding: '28px 24px 40px', margin: '0 auto' }
+        },
+          /* ── Saved pill ── */
+          React.createElement("div", { style: { textAlign: 'center', marginBottom: 6 } },
+            React.createElement("span", { className: "ct-saved-pill" },
+              React.createElement("span", { style: { color: '#4CAF50', fontSize: 13 } }, "✓"),
+              " Check-in saved"
+            )
+          ),
+
+          /* ── Floating emoji ── */
+          React.createElement("div", {
+            className: "float",
+            style: { textAlign: 'center', fontSize: 52, marginBottom: 14 }
+          }, coreIcon),
+
+          /* ── Mindfulness anchor ── */
+          React.createElement("p", { className: "ct-anchor" },
+            "Be with the feeling,", React.createElement("br"), "not in it."
+          ),
+          React.createElement("p", {
+            style: { textAlign: 'center', fontSize: 13, color: T.soft, marginBottom: 4, lineHeight: 1.5 }
+          }, "You felt ",
+            React.createElement("strong", { style: { color: coreDark } }, feeling),
+            ". Here are a few things worth considering."
+          ),
+
+          /* ── Feeling chain pill ── */
+          entry && entry.core && React.createElement("div", { style: { textAlign: 'center', marginBottom: 4 } },
+            React.createElement("span", {
+              style: {
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                background: corePastel, borderRadius: 20,
+                padding: '4px 12px', fontSize: 12, fontWeight: 600,
+                color: coreDark, border: '1px solid ' + coreColor + '44'
+              }
+            },
+              entry.core.label,
+              entry.secondary && React.createElement(React.Fragment, null,
+                React.createElement("span", { style: { color: coreColor, fontSize: 10 } }, "›"),
+                entry.secondary.label
+              ),
+              entry.tertiary && React.createElement(React.Fragment, null,
+                React.createElement("span", { style: { color: coreColor, fontSize: 10 } }, "›"),
+                entry.tertiary.label
+              )
+            )
+          ),
+
+          /* ── Disclaimer 1 — framing banner above nudges ── */
+          React.createElement("div", {
+            style: {
+              background: 'rgba(27,82,122,0.05)',
+              border: '1px solid rgba(170,205,224,0.4)',
+              borderRadius: 12,
+              padding: '11px 14px',
+              marginBottom: 16,
+              marginTop: 4
+            }
+          },
+            React.createElement("p", {
+              style: { fontSize: 12.5, color: '#4A8BAD', lineHeight: 1.6, margin: 0 }
+            }, "Noticing what you feel is a skill. These nudges are a starting point \u2014 not a substitute for professional support.")
+          ),
+
+          /* ── Nudges ── */
+          React.createElement("p", { className: "ct-section-label" }, "Consider this"),
+          nudges.map((nudge, i) =>
+            React.createElement("div", { key: i, className: "ct-nudge-card" },
+              React.createElement("div", {
+                className: "ct-nudge-num",
+                style: { background: coreColor + '33', color: coreDark }
+              }, String(i + 1)),
+              React.createElement("p", { className: "ct-nudge-text" }, nudge)
+            )
+          ),
+
+          /* ── Divider ── */
+          React.createElement("div", { style: { height: 1, background: 'rgba(170,205,224,0.3)', margin: '8px 0 0' } }),
+
+          /* ── Share row ── */
+          React.createElement("p", { className: "ct-section-label" }, "Shared moments"),
+          React.createElement("div", { className: "ct-share-row" },
+            React.createElement("div", null,
+              React.createElement("div", { className: "ct-share-who" }, "Who could you tell?"),
+              React.createElement("div", { className: "ct-share-sub" }, "Sharing feelings builds connection.")
+            ),
+            entry && React.createElement("button", {
+              className: "ct-share-btn",
+              onClick: () => setShowShareConsider(true)
+            }, "↗ Share")
+          ),
+
+          /* ── Crisis ── */
+          React.createElement("div", { className: "ct-crisis-row" },
+            React.createElement("a", {
+              href: "tel:988",
+              className: "ct-crisis-link"
+            }, "🫂 Need more support? Call or text 988")
+          ),
+
+          /* ── Disclaimer ── */
+          React.createElement("p", {
+            style: {
+              textAlign: 'center',
+              fontSize: 11.5,
+              color: '#7AAFC8',
+              lineHeight: 1.6,
+              margin: '4px 0 20px',
+              padding: '0 8px'
+            }
+          }, "These nudges support awareness, not treatment. For clinical support, contact a licensed therapist or call 988."),
+
+          /* ── Actions ── */
+          React.createElement("button", {
+            onClick: () => {
+              resetCheckIn();
+              setView(VIEW.CHECKIN);
+              setScreen(SCREEN.WELCOME);
+            },
+            style: {
+              width: '100%',
+              background: T.cta,
+              color: 'white',
+              border: 'none',
+              borderRadius: 50,
+              padding: '13px',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px ' + T.ctaShadow,
+              marginBottom: 10
+            }
+          }, "Done"),
+          React.createElement("button", {
+            onClick: () => { setView(VIEW.HISTORY); resetCheckIn(); },
+            style: {
+              width: '100%',
+              background: 'transparent',
+              color: T.primary,
+              border: '1.5px solid ' + T.ghost,
+              borderRadius: 50,
+              padding: '12px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }
+          }, "View History")
+        )
+      ),
+
+      /* ── Share modal ── */
+      showShareConsider && entry && React.createElement(ShareModal, {
+        entry: entry,
+        onClose: () => setShowShareConsider(false)
+      }),
+
+      React.createElement(NavBar, {
+        view: VIEW.CHECKIN,
+        onNav: v => { if (v !== VIEW.CHECKIN) { resetCheckIn(); setView(v); } }
+      })
+    );
+  }
+
+  // CORE
+  if (screen === SCREEN.CORE) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "nav-screen"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 480,
+        width: '100%',
+        padding: '28px 24px',
+        margin: '0 auto'
+      }
+    }, /*#__PURE__*/React.createElement(ProgressBar, {
+      step: 1
+    }), /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 22,
+        fontWeight: 700,
+        color: T.primary,
+        marginBottom: 6,
+        textAlign: 'center'
+      }
+    }, "What are you feeling right now?"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 14,
+        marginBottom: 4,
+        textAlign: 'center'
+      }
+    }, "Choose the feeling closest to yours"), /*#__PURE__*/React.createElement("div", {
+      className: "tip-box",
+      style: {
+        background: '#EEF6FF',
+        color: T.mid,
+        marginTop: 12
+      }
+    }, "\uD83D\uDCA1 ", /*#__PURE__*/React.createElement("strong", {
+      style: {
+        color: T.primary
+      }
+    }, "Tip:"), " Disgusted often comes from violated values, while Angry usually comes from feeling blocked. Surprised can feel like fear \u2014 if it's tipping toward overwhelm, try Fearful."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 12,
+        marginTop: 4
+      }
+    }, emotions.map(e => /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      className: "emotion-card",
+      onClick: () => {
+        setCoreEmotion(e);
+        setScreen(SCREEN.SECONDARY);
+      },
+      style: {
+        background: e.pastel,
+        border: `1.5px solid ${e.color}44`,
+        boxShadow: T.shadow
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 28,
+        marginBottom: 6
+      }
+    }, e.icon), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 17,
+        fontWeight: 700,
+        color: e.darkColor
+      }
+    }, e.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: e.darkColor,
+        opacity: 0.7,
+        marginTop: 3
+      }
+    }, e.hint)))))));
+  }
+
+  // SECONDARY
+  if (screen === SCREEN.SECONDARY) {
+    const e = coreEmotion;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "nav-screen"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 480,
+        width: '100%',
+        padding: '28px 24px',
+        margin: '0 auto'
+      }
+    }, /*#__PURE__*/React.createElement(ProgressBar, {
+      step: 2
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setScreen(SCREEN.CORE),
+      style: {
+        background: 'none',
+        border: 'none',
+        color: T.mid,
+        fontSize: 14,
+        cursor: 'pointer',
+        marginBottom: 12,
+        padding: 0
+      }
+    }, "\u2190 Back"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: 'center',
+        marginBottom: 20
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 36
+      }
+    }, e.icon), /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 21,
+        fontWeight: 700,
+        color: T.primary,
+        marginTop: 6
+      }
+    }, "Which kind of ", e.label.toLowerCase(), "?"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 13,
+        marginTop: 4
+      }
+    }, "Get closer to what's true")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10
+      }
+    }, e.secondary.map(s => /*#__PURE__*/React.createElement("div", {
+      key: s.id,
+      className: "emotion-card",
+      onClick: () => {
+        setSecondaryEmotion(s);
+        setScreen(SCREEN.TERTIARY);
+      },
+      style: {
+        background: T.card,
+        border: `1.5px solid ${e.color}44`,
+        boxShadow: T.shadow,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 14
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        fontWeight: 700,
+        color: e.darkColor
+      }
+    }, s.label), /*#__PURE__*/React.createElement(BodyFeel, {
+      text: s.bodyFeel,
+      color: e.darkColor,
+      pastel: e.pastel
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: T.mid,
+        marginTop: 4
+      }
+    }, s.synonyms.join(' · '))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: T.ghost,
+        fontSize: 18,
+        marginTop: 2
+      }
+    }, "\u203A")))))));
+  }
+
+  // TERTIARY
+  if (screen === SCREEN.TERTIARY) {
+    const e = coreEmotion;
+    const s = secondaryEmotion;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "nav-screen"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 480,
+        width: '100%',
+        padding: '28px 24px',
+        margin: '0 auto'
+      }
+    }, /*#__PURE__*/React.createElement(ProgressBar, {
+      step: 3
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setScreen(SCREEN.SECONDARY),
+      style: {
+        background: 'none',
+        border: 'none',
+        color: T.mid,
+        fontSize: 14,
+        cursor: 'pointer',
+        marginBottom: 12,
+        padding: 0
+      }
+    }, "\u2190 Back"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: 'center',
+        marginBottom: 20
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 36
+      }
+    }, e.icon), /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 21,
+        fontWeight: 700,
+        color: T.primary,
+        marginTop: 6
+      }
+    }, "What's the closest word?"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 13,
+        marginTop: 4
+      }
+    }, s.label, " \u2014 pick what feels most true")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10
+      }
+    }, s.tertiary.map(t => /*#__PURE__*/React.createElement("div", {
+      key: t.id,
+      className: "emotion-card",
+      onClick: () => {
+        setTertiaryEmotion(t);
+        setScreen(SCREEN.CONNECTION);
+      },
+      style: {
+        background: e.pastel,
+        border: `1.5px solid ${e.color}55`,
+        boxShadow: T.shadow
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 4,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        fontWeight: 700,
+        color: e.darkColor
+      }
+    }, t.label), /*#__PURE__*/React.createElement(BodyFeel, {
+      text: t.bodyFeel,
+      color: e.darkColor,
+      pastel: "rgba(255,255,255,0.7)"
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: e.darkColor,
+        opacity: 0.75,
+        marginBottom: 6
+      }
+    }, t.definition), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 4
+      }
+    }, t.synonyms.map(syn => /*#__PURE__*/React.createElement("span", {
+      key: syn,
+      className: "chip",
+      style: {
+        background: `${e.color}22`,
+        color: e.darkColor,
+        border: `1px solid ${e.color}44`,
+        fontSize: 11
+      }
+    }, syn)))))))));
+  }
+
+  // CONNECTION
+  if (screen === SCREEN.CONNECTION) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "nav-screen"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 480,
+        width: '100%',
+        padding: '28px 24px',
+        margin: '0 auto'
+      }
+    }, /*#__PURE__*/React.createElement(ProgressBar, {
+      step: 4
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setScreen(SCREEN.TERTIARY),
+      style: {
+        background: 'none',
+        border: 'none',
+        color: T.mid,
+        fontSize: 14,
+        cursor: 'pointer',
+        marginBottom: 12,
+        padding: 0
+      }
+    }, "\u2190 Back"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: 'center',
+        marginBottom: 24
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 21,
+        fontWeight: 700,
+        color: T.primary
+      }
+    }, "Who are you with?"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 13,
+        marginTop: 6
+      }
+    }, "Context helps you understand your feelings better")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 10,
+        marginBottom: 20
+      }
+    }, connections.map(c => /*#__PURE__*/React.createElement("div", {
+      key: c.id,
+      className: "emotion-card",
+      onClick: () => setConnection(c),
+      style: {
+        background: connection && connection.id === c.id ? '#EEF6FF' : T.card,
+        border: connection && connection.id === c.id ? `1.5px solid ${T.soft}` : `1.5px solid ${T.border}`,
+        boxShadow: T.shadow,
+        textAlign: 'center'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 26,
+        marginBottom: 6
+      }
+    }, c.icon), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: T.primary,
+        fontWeight: 600
+      }
+    }, c.label)))), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setScreen(SCREEN.NOTE),
+      style: {
+        width: '100%',
+        background: connection ? T.cta : T.soft,
+        color: 'white',
+        border: 'none',
+        borderRadius: 50,
+        padding: '14px',
+        fontSize: 15,
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: `0 4px 16px ${T.ctaShadow}`
+      }
+    }, connection ? 'Continue →' : 'Skip'))));
+  }
+
+  // NOTE
+  if (screen === SCREEN.NOTE) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app-shell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "nav-screen"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fadeUp",
+      style: {
+        maxWidth: 480,
+        width: '100%',
+        padding: '28px 24px',
+        margin: '0 auto'
+      }
+    }, /*#__PURE__*/React.createElement(ProgressBar, {
+      step: 5
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setScreen(SCREEN.CONNECTION),
+      style: {
+        background: 'none',
+        border: 'none',
+        color: T.mid,
+        fontSize: 14,
+        cursor: 'pointer',
+        marginBottom: 12,
+        padding: 0
+      }
+    }, "\u2190 Back"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: 'center',
+        marginBottom: 24
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      style: {
+        fontSize: 21,
+        fontWeight: 700,
+        color: T.primary
+      }
+    }, "Anything else on your mind?"), /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: T.mid,
+        fontSize: 13,
+        marginTop: 6
+      }
+    }, "Optional \u2014 just for you")), /*#__PURE__*/React.createElement("textarea", {
+      value: note,
+      onChange: e => setNote(e.target.value),
+      placeholder: "A thought, a detail, something you noticed...",
+      style: {
+        width: '100%',
+        minHeight: 120,
+        padding: '14px 16px',
+        borderRadius: 16,
+        border: `1.5px solid ${T.border}`,
+        background: T.card,
+        color: T.primary,
+        fontSize: 15,
+        lineHeight: 1.6,
+        resize: 'vertical',
+        outline: 'none',
+        fontFamily: 'inherit',
+        boxShadow: T.shadow
+      }
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: completeCheckIn,
+      style: {
+        marginTop: 20,
+        width: '100%',
+        background: T.cta,
+        color: 'white',
+        border: 'none',
+        borderRadius: 50,
+        padding: '14px',
+        fontSize: 15,
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: `0 4px 16px ${T.ctaShadow}`
+      }
+    }, "Complete Check-In \u2713"), /*#__PURE__*/React.createElement("button", {
+      onClick: completeCheckIn,
+      style: {
+        marginTop: 10,
+        width: '100%',
+        background: 'transparent',
+        color: T.mid,
+        border: 'none',
+        padding: '10px',
+        fontSize: 14,
+        cursor: 'pointer'
+      }
+    }, "Skip"))));
+  }
+  return null;
+}
+
+/* ─── Mount ─── */
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render( /*#__PURE__*/React.createElement(App, null));
+</script>
+</body>
+</html>

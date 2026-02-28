@@ -3676,18 +3676,6 @@ function App() {
             )
           ),
 
-          /* ── Disclaimer ── */
-          React.createElement("p", {
-            style: {
-              textAlign: 'center',
-              fontSize: 11.5,
-              color: '#7AAFC8',
-              lineHeight: 1.6,
-              margin: '4px 0 20px',
-              padding: '0 8px'
-            }
-          }, "These nudges support awareness, not treatment. For clinical support, contact a licensed therapist or call 988."),
-
           /* ── Actions ── */
           React.createElement("button", {
             onClick: () => {
@@ -3722,7 +3710,19 @@ function App() {
               fontWeight: 600,
               cursor: 'pointer'
             }
-          }, "View History")
+          }, "View History"),
+
+          /* ── Disclaimer ── */
+          React.createElement("p", {
+            style: {
+              textAlign: 'center',
+              fontSize: 11.5,
+              color: '#7AAFC8',
+              lineHeight: 1.6,
+              margin: '20px 0 8px',
+              padding: '0 8px'
+            }
+          }, "These nudges support awareness, not treatment. For clinical support, contact a licensed therapist or call 988.")
         )
       ),
 

@@ -41,6 +41,37 @@ self.addEventListener('activate', event => {
   );
 });
 
+// ─── Push: show notification when a push message arrives ──────────────────────
+self.addEventListener('push', event => {
+  const data = event.data?.json() ?? {};
+  const title = data.title || 'Lucid · Check In 💙';
+  const options = {
+    body: data.body || 'Take a moment — how are you feeling right now?',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    tag: 'lucid-reminder',
+    renotify: true,
+    data: { url: self.registration.scope + 'Lucid%20v4.html' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// ─── Notification click: focus app or open it ─────────────────────────────────
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || './Lucid%20v4.html';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes('Lucid') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
+});
+
 // ─── Fetch: network-first for HTML, cache-first for everything else ────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);

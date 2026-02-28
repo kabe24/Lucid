@@ -1218,6 +1218,35 @@ function isStandalone() {
 }
 
 /* ─── Notification helpers ─── */
+const VAPID_PUBLIC_KEY = 'BNyscrRl_Zvn6NOpLcOZcwXz0RW5YC3JtT5fbuAAib1L16MejNHgoKi9FnWJL1KKN1PxbnggT2EFF8sl5A182C4';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    localStorage.setItem('lucid_push_sub', JSON.stringify(sub));
+    console.log('[Lucid Push] Subscribed:', sub.endpoint);
+    return sub;
+  } catch (err) {
+    console.warn('[Lucid Push] Subscribe failed:', err);
+    return null;
+  }
+}
+
 function requestNotifPermission() {
   if (!('Notification' in window)) return Promise.resolve('unsupported');
   if (Notification.permission !== 'default') return Promise.resolve(Notification.permission);
@@ -2816,15 +2845,18 @@ function SettingsScreen({
       requestNotifPermission().then(function (result) {
         setNotifPerm(result);
         if (result === 'granted') scheduleReminder(reminderTime, notifTimerRef);
+        if (result === 'granted') subscribeToPush();
       });
     } else if (newVal && notifPerm === 'granted') {
       scheduleReminder(reminderTime, notifTimerRef);
+      subscribeToPush();
     }
   }
   function handleEnableNotif() {
     requestNotifPermission().then(function (result) {
       setNotifPerm(result);
       if (result === 'granted' && reminders) scheduleReminder(reminderTime, notifTimerRef);
+      if (result === 'granted') subscribeToPush();
     });
   }
   function handleTimeChange(t) {

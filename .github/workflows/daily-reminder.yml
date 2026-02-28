@@ -1,0 +1,37 @@
+name: Lucid Daily Reminder
+
+on:
+  # Runs at 1:00 AM UTC = 8:00 PM EST / 5:00 PM PST
+  # Adjust the cron to match your reminder time + timezone offset
+  schedule:
+    - cron: '0 1 * * *'
+  # Also allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Custom notification body (optional)'
+        required: false
+        default: 'Take a moment — how are you feeling right now?'
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web-push
+        run: npm install web-push
+
+      - name: Send push notification
+        env:
+          VAPID_PUBLIC_KEY:  ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          PUSH_BODY: ${{ github.event.inputs.message || 'Take a moment — how are you feeling right now?' }}
+        run: node send-push.js
